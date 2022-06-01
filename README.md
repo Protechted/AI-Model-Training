@@ -1,0 +1,1 @@
+# Github Repo with code for training the AI model and acquiring all sensor values from the Nicla Sense ME
