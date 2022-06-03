@@ -31,7 +31,7 @@
 
   const int VERSION = 0x00000000;
 
-  const float accelerationThreshold = 1.0; // threshold of significant in G's
+  const float accelerationThreshold = 0.2; // threshold of significant in G's
   const int numSamples = 100;
   int truncate = 25000.0;
 
@@ -201,11 +201,11 @@ void calibrate() {
           baseline_a[1] = accelerometer.y();
           baseline_a[2] = accelerometer.z();
 
-          float aggregatedAcceleration = x + y + z;
+          float aggregatedAcceleration = y;
           
           if (aggregatedAcceleration > accelerationThreshold) {
             samplesRead = 0;
-            randNumber = random(100)/100.0;
+            randNumber = (float) random(100) / 100.0;
 
             if (sampleIdCharacteristic.subscribed()){
               sampleIdCharacteristic.writeValue(randNumber);
@@ -226,13 +226,6 @@ void calibrate() {
         y = constrain(gyroscope.y(), -truncate, truncate) / 25000.0;
         z = constrain(gyroscope.z(), -truncate, truncate) / 25000.0;
 
-        Serial.print(x);
-        Serial.print(",");
-        Serial.print(y);
-        Serial.print(",");
-        Serial.print(z);
-        Serial.println("");
-
         float gyroscopeValues[3] = {x, y, z};
 
         gyroscopeCharacteristic.writeValue(gyroscopeValues, sizeof(gyroscopeValues));
@@ -243,6 +236,13 @@ void calibrate() {
         x = constrain(accelerometer.x() - baseline_a[0], -truncate, truncate) / truncate;
         y = constrain(accelerometer.y() - baseline_a[1], -truncate, truncate) / truncate;
         z = constrain(accelerometer.z() - baseline_a[2], -truncate, truncate) / truncate;
+
+        Serial.print(x);
+        Serial.print(",");
+        Serial.print(y);
+        Serial.print(",");
+        Serial.print(z);
+        Serial.println("");
 
         baseline_a[0] = accelerometer.x();
         baseline_a[1] = accelerometer.y();
