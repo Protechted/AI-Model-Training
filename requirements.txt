@@ -4,3 +4,6 @@ dash_bootstrap_components
 dash-extensions
 websockets
 pandas
+psycopg2
+numpy
+matplotlib
