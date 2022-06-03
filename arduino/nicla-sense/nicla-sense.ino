@@ -292,12 +292,9 @@ void calibrate() {
     }
   }
 
-
-
 void blePeripheralDisconnectHandler(BLEDevice central){
     nicla::leds.setColor(red);
   }
-
 
   void onTemperatureCharacteristicRead(BLEDevice central, BLECharacteristic characteristic){
     float temperatureValue = temperature.value();

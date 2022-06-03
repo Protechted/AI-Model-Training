@@ -10,7 +10,7 @@ accelerometer_uuid = "19b10000-5001-537e-4f6c-d104768a1214" # 3 times 4 byte flo
 gyroscope_uuid = "19b10000-6001-537e-4f6c-d104768a1214" # 3 times 4 byte float32 in an array
 quaternion_uuid = "19b10000-7001-537e-4f6c-d104768a1214" # 4 times 4 byte float32 in an array
 pressure_uuid = "19b10000-4001-537e-4f6c-d104768a1214" # 4 times 4 byte float32 in an array
-bundled_uuid = "19b10000-1002-537e-4f6c-d104768a1214" # Array of 11x 2 Bytes, AX,AY,AZ,GX,GY,GZ,QX,QY,QW,QZ,P
+bundled_uuid = "19b10000-1002-537e-4f6c-d104768a1214" # Array of 11x 4 Bytes, AX,AY,AZ,GX,GY,GZ,QX,QY,QW,QZ,P
 
 def sample_id_callback(handle, data):
     #print(handle, data)
