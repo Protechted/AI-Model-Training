@@ -71,6 +71,7 @@ def bundle_callback(handle, data):
             startcapture = False
             sample_count_int = 0
             sample_df = pd.DataFrame(sample_dict_list)
+            sample_df.to_csv("/Users/danielebert/Downloads/test.csv", sep=',')
             print("Test")
 
         print(f"{ax}, {ay}, {az}, {gx}, {gy}, {gz}, {qx}, {qy}, {qz}, {qw}, {p}")
