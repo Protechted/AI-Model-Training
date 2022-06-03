@@ -9,6 +9,8 @@ CLIENTS = set()
 
 sample_df = pd.DataFrame()
 sample_dict_list = []
+global sample_count_int
+global startcapture
 sample_count_int: int = 0
 startcapture: bool = False
 
@@ -65,6 +67,11 @@ def bundle_callback(handle, data):
                        "qw": qw, "p": p}
         sample_dict_list.append(sample_dict)
         print(sample_count_int)
+        if sample_count_int == 200:
+            startcapture = False
+            sample_count_int = 0
+            sample_df = pd.DataFrame(sample_dict_list)
+            print("Test")
 
         print(f"{ax}, {ay}, {az}, {gx}, {gy}, {gz}, {qx}, {qy}, {qz}, {qw}, {p}")
 
@@ -106,6 +113,7 @@ async def handler(websocket):
     try:
         async for msg in websocket:
             if msg == "start":
+                global startcapture
                 startcapture = True
                 print(startcapture)
             await websocket.send(msg)
