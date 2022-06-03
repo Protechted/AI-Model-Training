@@ -1,7 +1,7 @@
 import asyncio
-import sys
 import struct
 from bleak import BleakClient
+import websockets
 
 sample_id_uuid = "19b10000-0001-537e-4f6c-d104768a1214" # 4 Byte float32
 temperature_uuid = "19b10000-2001-537e-4f6c-d104768a1214" # 4 Byte float32
@@ -34,6 +34,7 @@ def accelerometer_data_callback(handle, data):
 def pressure_data_callback(handle, data):
     # print(handle, data)
     [pressure] = struct.unpack('f', data)
+    websocket.send()
     #print(pressure)
 
 def bundle_callback(handle, data):
@@ -61,8 +62,13 @@ async def main(address):
         #[humidity] = struct.unpack('i', humidity_bytes)
         #print(humidity)
 
-        await asyncio.sleep(6000000)
+        async with websockets.serve(echo, "localhost", 8765) as websocket:
+            await asyncio.Future()  # run forever
         await client.stop_notify(accelerometer_uuid)
+
+async def echo(websocket):
+    async for message in websocket:
+        await websocket.send(message)
 
 if __name__ == "__main__":
     address = "02D307CC-39AB-9D1B-A279-6B8245193D28"
