@@ -71,7 +71,7 @@ def bundle_callback(handle, data):
             startcapture = False
             sample_count_int = 0
             sample_df = pd.DataFrame(sample_dict_list)
-            sample_df.to_csv("/Users/danielebert/Downloads/test.csv", sep=',')
+            sample_df.to_csv("/Users/benschaper/Downloads/test.csv", sep=',')
             print("Test")
 
         print(f"{ax}, {ay}, {az}, {gx}, {gy}, {gz}, {qx}, {qy}, {qz}, {qw}, {p}")
@@ -125,6 +125,6 @@ async def handler(websocket):
 
 if __name__ == "__main__":
     address = "02D307CC-39AB-9D1B-A279-6B8245193D28"
-    address = "42D1EB68-5EDF-85F9-D05E-82E0AD1CBD94"
+    #address = "42D1EB68-5EDF-85F9-D05E-82E0AD1CBD94"
     print('address:', address)
     asyncio.run(main(address))
