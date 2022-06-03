@@ -16,7 +16,7 @@ CONTENT_STYLE = {
 
 websocket = html.Div([
     dcc.Input(id="input", autoComplete="off"), html.Div(id="message"),
-    WebSocket(url="ws://127.0.0.1:5000/ws", id="ws")
+    WebSocket(url="ws://127.0.0.1:5000/", id="ws")
 ])
 
 

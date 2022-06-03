@@ -3,3 +3,4 @@ dash
 dash_bootstrap_components
 dash-extensions
 websockets
+pandas
