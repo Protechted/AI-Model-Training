@@ -84,20 +84,23 @@ def bundle_callback(handle, data):
 
 
 
-
+def disconnected_callback(client):
+    print("Client with address {} got disconnected!".format(client.address))
+    quit()
 
 async def main(address):
     async with BleakClient(address) as client:
         if (not client.is_connected):
             raise "client not connected"
 
-        services = await client.get_services()
+        #services = await client.get_services()
         await client.start_notify(sample_id_uuid, sample_id_callback)
         await client.start_notify(accelerometer_uuid, accelerometer_data_callback)
         await client.start_notify(gyroscope_uuid, gyroscope_data_callback)
         await client.start_notify(quaternion_uuid, quaternation_data_callback)
         await client.start_notify(pressure_uuid, pressure_data_callback)
         await client.start_notify(bundled_uuid, bundle_callback)
+        client.set_disconnected_callback(disconnected_callback)
         # temp_bytes = await client.read_gatt_char(temperature_uuid)         #print(hexlify(temp_bytes))
         # [temperature] = struct.unpack('f', temp_bytes)
         # print(temperature)
