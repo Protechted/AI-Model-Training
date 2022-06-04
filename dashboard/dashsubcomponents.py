@@ -20,9 +20,9 @@ sidebar = html.Div(
         ),
         dbc.Nav(
             [
-                dbc.NavLink("Home", href="/", active="exact"),
-                dbc.NavLink("Page 1", href="/page-1", active="exact"),
-                dbc.NavLink("Page 2", href="/page-2", active="exact"),
+                dbc.NavLink("Home", href="/", active="exact", external_link=True),
+                dbc.NavLink("ML Training", href="/mltraining", active="exact", external_link=True),
+                dbc.NavLink("Live Data", href="/livedata", active="exact", external_link=True),
             ],
             vertical=True,
             pills=True,

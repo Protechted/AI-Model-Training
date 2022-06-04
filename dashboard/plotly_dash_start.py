@@ -1,3 +1,9 @@
+import json
+from collections import deque
+
+import plotly
+import plotly.graph_objs as go
+
 import dashsubcomponents
 from dash import Dash
 from dash.dependencies import Input, Output
@@ -17,14 +23,17 @@ CONTENT_STYLE = {
 
 websocket = html.Div([
     dcc.Input(id="input", autoComplete="off"), html.Div(id="message"),
-    WebSocket(url="ws://127.0.0.1:5000/", id="ws")
+
 ])
 
 
-mainpage = html.Div([dcc.Textarea(id='liveupdate', value="This will contain the log", style={'width': '100%', 'height': '100%'}), websocket, dcc.Interval(interval=1000, n_intervals=0, id="trigger")], id="page-content", style=CONTENT_STYLE)
+mltraining = html.Div([dcc.Textarea(id='liveupdate', value="""Commands: "start" to start the Training """, style={'width': '100%', 'height': '100%'}), websocket])
+mainpage = html.Div([html.P("Willkommen"), websocket])
+liveData = html.Div([html.P("Live Data from the sensor"), websocket, dcc.Graph(id = 'live-graph', animate = False, config={"responsive":True})])
+
 
 content = html.Div(id="page-content", style=CONTENT_STYLE)
-app.layout = html.Div([dcc.Location(id="url"), dashsubcomponents.sidebar, content])
+app.layout = html.Div([dcc.Location(id="url"), dashsubcomponents.sidebar, content, WebSocket(url="ws://192.168.8.218:5300/", id="ws")])
 
 
 @app.callback(Output("ws", "send"), [Input("input", "value")])
@@ -36,8 +45,10 @@ def send(value):
 def display_page(pathname):
     if pathname == '/':
         return mainpage
-    elif pathname == '/page-2':
-        return mainpage
+    elif pathname == '/mltraining':
+        return mltraining
+    elif pathname == '/livedata':
+        return liveData
     else:
         return mainpage
 
@@ -64,8 +75,44 @@ def message(e):
                 }
             }
         )
-
     return f"Response from websocket: {e['data']}"
+
+
+X = deque(maxlen = 50)
+xaxiscounter = 0
+Y = deque(maxlen = 50)
+
+@app.callback(Output("live-graph", "figure"), [Input("ws", "message")])
+def message(e):
+    global xaxiscounter
+    global X
+    global Y
+    if (str(e['data']).startswith("liveData:")):
+        dict_string = str(e['data']).split("liveData:")[1]
+        dict_values = json.loads(dict_string)
+        xaxiscounter +=1
+        X.append(xaxiscounter)
+        Y.append(dict_values["ax"])
+        print(dict_values["ax"])
+
+        figure = {
+            'data': [
+                {"x": list[X], "y": list[Y], 'type': 'line', 'name': 'ax'},
+            ],
+            'layout': {
+                'title': 'Live Data Graph',
+                'showlegend': 'true'
+            }
+        }
+        data = plotly.graph_objs.Scatter(
+                x=list(X),
+                y=list(Y),
+                name='Scatter',
+
+        )
+
+        return {'data': [data],
+                'layout': go.Layout(xaxis=dict(range=[min(X), max(X)]), yaxis=dict(range=[min(Y), max(Y)]), )}
 
 if __name__ == '__main__':
     app.run_server()

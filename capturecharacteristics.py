@@ -111,10 +111,11 @@ async def main(address):
 
 
 async def broadcastMessage(msg):
-    #while True:
         for ws in CLIENTS:
-            await ws.send(msg)
-        #await asyncio.sleep(2)
+            try:
+                await ws.send(msg)
+            except websockets.ConnectionClosed:
+                pass
 
 
 async def handler(websocket):
