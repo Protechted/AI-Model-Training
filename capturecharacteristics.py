@@ -133,7 +133,7 @@ async def handler(websocket):
             if msg == "live":
                 liveTransmit = True
                 print("LiveTransmit state:" + str(liveTransmit))
-            if msg == "liveStop":
+            if msg == "stopLive":
                 liveTransmit = False
                 print("LiveTransmit state:" + str(liveTransmit))
             await websocket.send(msg)

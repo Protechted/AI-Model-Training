@@ -27,9 +27,9 @@ websocket = html.Div([
 ])
 
 
-mltraining = html.Div([dcc.Textarea(id='liveupdate', value="""Commands: "start" to start the Training """, style={'width': '100%', 'height': '100%'}), websocket])
+mltraining = html.Div([dcc.Textarea(id='liveupdate', value="""Commands: "start" to start the Training. Results will be plotted when the training finished. """, style={'width': '100%', 'height': '100%'}), websocket])
 mainpage = html.Div([html.P("Willkommen"), websocket])
-liveData = html.Div([html.P("Live Data from the sensor"), websocket, html.Br(), html.H2("Daten Beschleunigungssensor"), dcc.Graph(id = 'live-graph-accelerometer', animate = False, config={"responsive":True})])
+liveData = html.Div([html.P("""Live Data from the sensor. Commands: "live" to start the live Transmitting, "stopLive" to stop it. """), websocket, html.Br(), html.H2("Daten Beschleunigungssensor"), dcc.Graph(id = 'live-graph-accelerometer', animate = False, config={"responsive":True})])
 
 
 content = html.Div(id="page-content", style=CONTENT_STYLE)
