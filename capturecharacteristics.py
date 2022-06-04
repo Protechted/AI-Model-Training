@@ -11,8 +11,11 @@ sample_df = pd.DataFrame()
 sample_dict_list = []
 global sample_count_int
 global startcapture
+global liveTransmit
 sample_count_int: int = 0
 startcapture: bool = False
+liveTransmit: bool = False
+
 
 sample_id_uuid = "19b10000-0001-537e-4f6c-d104768a1214" # 4 Byte float32
 temperature_uuid = "19b10000-2001-537e-4f6c-d104768a1214" # 4 Byte float32
@@ -70,7 +73,9 @@ def bundle_callback(handle, data):
             sample_count_int = 0
             sample_df = pd.DataFrame(sample_dict_list)
             sample_df.to_csv("./data/test.csv", sep=',', index=False)
-            print("Test")
+            result = sample_df.to_json(orient="index")
+            asyncio.create_task(broadcastMessage("dataframeoutput:" + result))
+            print(result)
 
         print(f"{ax}, {ay}, {az}, {gx}, {gy}, {gz}, {qx}, {qy}, {qz}, {qw}, {p}")
 
@@ -97,14 +102,14 @@ async def main(address):
         # print(humidity)
         async with websockets.serve(handler, "localhost", 5000) as websocket:
             await asyncio.Future()  # run forever
-        await client.stop_notify(accelerometer_uuid)
+        #await client.stop_notify(accelerometer_uuid)
 
 
 async def broadcastMessage(msg):
-    while True:
+    #while True:
         for ws in CLIENTS:
             await ws.send(msg)
-        await asyncio.sleep(2)
+        #await asyncio.sleep(2)
 
 
 async def handler(websocket):
@@ -123,6 +128,6 @@ async def handler(websocket):
 
 if __name__ == "__main__":
     address = "02D307CC-39AB-9D1B-A279-6B8245193D28"
-    #address = "42D1EB68-5EDF-85F9-D05E-82E0AD1CBD94"
+    address = "42D1EB68-5EDF-85F9-D05E-82E0AD1CBD94"
     print('address:', address)
     asyncio.run(main(address))
