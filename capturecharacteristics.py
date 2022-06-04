@@ -2,20 +2,17 @@ import asyncio
 import struct
 from bleak import BleakClient
 import websockets
+import json
 import pandas as pd
 from websockets.legacy.server import WebSocketServer
 
 CLIENTS = set()
 
-sample_df = pd.DataFrame()
+
 sample_dict_list = []
-global sample_count_int
-global startcapture
-global liveTransmit
 sample_count_int: int = 0
 startcapture: bool = False
 liveTransmit: bool = False
-
 
 sample_id_uuid = "19b10000-0001-537e-4f6c-d104768a1214" # 4 Byte float32
 temperature_uuid = "19b10000-2001-537e-4f6c-d104768a1214" # 4 Byte float32
@@ -62,6 +59,7 @@ def bundle_callback(handle, data):
     # asyncio.create_task(broadcastMessage(f"New Values came in: {ax}"))
     global sample_count_int
     global startcapture
+    global sample_dict_list
     if startcapture:
         sample_count_int +=1
         sample_dict = {"ax": ax, "ay": ay, "az": az, "gx": gx, "gy": gy, "gz": gz, "qx": qx, "qy": qy, "qz": qz,
@@ -74,10 +72,17 @@ def bundle_callback(handle, data):
             sample_df = pd.DataFrame(sample_dict_list)
             sample_df.to_csv("./data/test.csv", sep=',', index=False)
             result = sample_df.to_json(orient="index")
+            sample_dict_list = []
             asyncio.create_task(broadcastMessage("dataframeoutput:" + result))
             print(result)
 
         print(f"{ax}, {ay}, {az}, {gx}, {gy}, {gz}, {qx}, {qy}, {qz}, {qw}, {p}")
+    if liveTransmit:
+        sample_dict = {"ax": ax, "ay": ay, "az": az, "gx": gx, "gy": gy, "gz": gz, "qx": qx, "qy": qy, "qz": qz,
+                       "qw": qw, "p": p}
+        asyncio.create_task(broadcastMessage("liveData:" + json.dumps(sample_dict)))
+
+
 
 
 
@@ -100,7 +105,7 @@ async def main(address):
         # humidity_bytes = await client.read_gatt_char(humidity_uuid)
         # [humidity] = struct.unpack('i', humidity_bytes)
         # print(humidity)
-        async with websockets.serve(handler, "localhost", 5000) as websocket:
+        async with websockets.serve(handler, "0.0.0.0", 5300) as websocket:
             await asyncio.Future()  # run forever
         #await client.stop_notify(accelerometer_uuid)
 
@@ -113,13 +118,20 @@ async def broadcastMessage(msg):
 
 
 async def handler(websocket):
+    global liveTransmit
     CLIENTS.add(websocket)
     try:
         async for msg in websocket:
             if msg == "start":
                 global startcapture
                 startcapture = True
-                print(startcapture)
+                print("StartCapture state:" + str(startcapture))
+            if msg == "live":
+                liveTransmit = True
+                print("LiveTransmit state:" + str(liveTransmit))
+            if msg == "liveStop":
+                liveTransmit = False
+                print("LiveTransmit state:" + str(liveTransmit))
             await websocket.send(msg)
             pass
     finally:
