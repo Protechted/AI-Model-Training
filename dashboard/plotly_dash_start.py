@@ -1,8 +1,10 @@
 import json
 from collections import deque
 
+import numpy as np
 import plotly
 import plotly.graph_objs as go
+from matplotlib import pyplot as plt
 
 import dashsubcomponents
 from dash import Dash
@@ -11,6 +13,7 @@ from dash_extensions import WebSocket
 import dash_bootstrap_components as dbc
 from dash import Output, html, dcc, Input
 import pandas as pd
+import plotly.tools as tls
 
 # Create example app.
 app = Dash(__name__, prevent_initial_callbacks=True, external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -27,7 +30,7 @@ websocket = html.Div([
 ])
 
 
-mltraining = html.Div([dcc.Textarea(id='liveupdate', value="""Commands: "start" to start the Training. Results will be plotted when the training finished. """, style={'width': '100%', 'height': '100%'}), websocket])
+mltraining = html.Div([html.P("""Commands: "start" to start the Training. Results will be plotted when the training finished. """), websocket])
 mainpage = html.Div([html.P("Willkommen"), websocket])
 liveData = html.Div([html.P("""Live Data from the sensor. Commands: "live" to start the live Transmitting, "stopLive" to stop it. """), websocket, html.Br(), html.H2("Daten Beschleunigungssensor"), dcc.Graph(id = 'live-graph-accelerometer', animate = False, config={"responsive":True})])
 
@@ -52,6 +55,11 @@ def display_page(pathname):
     else:
         return mainpage
 
+def df_to_plotly(df):
+    return {'z': df.values.tolist(),
+            'x': df.columns.tolist(),
+            'y': df.columns.tolist()}
+
 @app.callback(Output("message", "children"), [Input("ws", "message")])
 def message(e):
     if (str(e['data']).startswith("dataframeoutput:")):
@@ -60,19 +68,74 @@ def message(e):
 
         print(loaded_df)
         print(loaded_df['ax'].tolist())
-        return dcc.Graph(
+
+        #Correlation logic
+        corr = loaded_df.corr()
+        fig = go.Figure(data=go.Heatmap(df_to_plotly(loaded_df)))
+        #End correlation logic
+
+        return html.Div([dcc.Graph(
             id='ResultGraph',
             figure={
                 'data': [
-                    {"x": loaded_df.index.values.tolist(), "y": loaded_df['ax'].tolist(), 'type': 'line', 'name': 'ax'},
-                    {"x": loaded_df.index.values.tolist(), "y": loaded_df['p'].tolist(), 'type': 'line', 'name': 'p'}
+                    {"x": loaded_df.index.values.tolist(), "y": loaded_df['ax'].tolist(), 'type': 'line', 'name': 'Ax'},
+                    {"x": loaded_df.index.values.tolist(), "y": loaded_df['ay'].tolist(), 'type': 'line', 'name': 'Ay'},
+                    {"x": loaded_df.index.values.tolist(), "y": loaded_df['az'].tolist(), 'type': 'line', 'name': 'Az'},
                 ],
                 'layout': {
-                    'title': 'Recorded Data Graph',
+                    'title': 'Recorded Data Graph- Accelerometer',
                     'showlegend': 'true'
                 }
             }
-        )
+        ),
+        dcc.Graph(
+            id='ResultGraphGyroscope',
+            figure={
+                'data': [
+                    {"x": loaded_df.index.values.tolist(), "y": loaded_df['gx'].tolist(), 'type': 'line', 'name': 'Gx'},
+                    {"x": loaded_df.index.values.tolist(), "y": loaded_df['gy'].tolist(), 'type': 'line', 'name': 'Gy'},
+                    {"x": loaded_df.index.values.tolist(), "y": loaded_df['gz'].tolist(), 'type': 'line', 'name': 'Gz'},
+                ],
+                'layout': {
+                    'title': 'Recorded Data Graph - Gyroscope',
+                    'showlegend': 'true'
+                }
+            }
+        ),
+        dcc.Graph(
+            id='ResultGraphMagnetometer',
+            figure={
+                'data': [
+                    {"x": loaded_df.index.values.tolist(), "y": loaded_df['qx'].tolist(), 'type': 'line', 'name': 'qx'},
+                    {"x": loaded_df.index.values.tolist(), "y": loaded_df['qy'].tolist(), 'type': 'line', 'name': 'qy'},
+                    {"x": loaded_df.index.values.tolist(), "y": loaded_df['qz'].tolist(), 'type': 'line', 'name': 'qz'},
+                    {"x": loaded_df.index.values.tolist(), "y": loaded_df['qw'].tolist(), 'type': 'line', 'name': 'qw'},
+
+                ],
+                'layout': {
+                    'title': 'Recorded Data Graph - Magnetometer',
+                    'showlegend': 'true'
+                }
+            }
+        ),
+            dcc.Graph(
+                id='ResultGraphPressure',
+                figure={
+                    'data': [
+                        {"x": loaded_df.index.values.tolist(), "y": loaded_df['p'].tolist(), 'type': 'line',
+                         'name': 'p'}
+                    ],
+                    'layout': {
+                        'title': 'Recorded Data Graph - Pressure',
+                        'showlegend': 'true'
+                    }
+                }
+            ),
+            dcc.Graph(
+                id='ResultGraphCorrelation',
+                figure=fig
+            ),
+        ])
     if (str(e['data']).startswith("liveData:")):
         return
     return f"Response from websocket: {e['data']}"

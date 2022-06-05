@@ -292,7 +292,13 @@ void calibrate() {
     }
   }
 
+void software_reset(){
+  NRF_POWER->GPREGRET = 0xB0UL;
+  NVIC_SystemReset();
+}
+
 void blePeripheralDisconnectHandler(BLEDevice central){
+  software_reset();
     nicla::leds.setColor(red);
   }
 

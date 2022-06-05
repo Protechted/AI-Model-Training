@@ -1,9 +1,10 @@
-bleak
-dash
+bleak~=0.14.3
+dash~=2.4.1
 dash_bootstrap_components
 dash-extensions
-websockets
-pandas
-psycopg2
-numpy
-matplotlib
+websockets~=10.3
+pandas~=1.4.2
+psycopg2~=2.9.3
+numpy~=1.22.4
+matplotlib~=3.5.2
+plotly~=5.8.0
