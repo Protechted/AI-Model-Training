@@ -30,14 +30,21 @@ websocket = html.Div([
 ])
 
 
-mltraining = html.Div([html.P("""Commands: "start" to start the Training. Results will be plotted when the training finished. """), websocket])
+mltraining = html.Div([html.P("""Commands: "start" to start the Training. Results will be plotted when the training finished. """), dbc.Button('Start training', id='starttraining', n_clicks=0), websocket])
 mainpage = html.Div([html.P("Willkommen"), websocket])
 liveData = html.Div([html.P("""Live Data from the sensor. Commands: "live" to start the live Transmitting, "stopLive" to stop it. """), websocket, html.Br(), html.H2("Daten Beschleunigungssensor"), dcc.Graph(id = 'live-graph-accelerometer', animate = False, config={"responsive":True})])
 
 
 content = html.Div(id="page-content", style=CONTENT_STYLE)
-app.layout = html.Div([dcc.Location(id="url"), dashsubcomponents.sidebar, content, WebSocket(url="ws://192.168.8.218:5300/", id="ws")])
+app.layout = html.Div([dcc.Location(id="url"), dashsubcomponents.sidebar, content, WebSocket(url="ws://127.0.0.1:5300/", id="ws")])
 
+
+@app.callback(
+    Output("input", "value"),
+    Input('starttraining','n_clicks'),
+)
+def startTrainingButton():
+    return "start"
 
 @app.callback(Output("ws", "send"), [Input("input", "value")])
 def send(value):
