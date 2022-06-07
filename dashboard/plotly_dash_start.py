@@ -43,7 +43,7 @@ liveData = html.Div(
 
 content = html.Div(id="page-content", style=CONTENT_STYLE)
 app.layout = html.Div(
-    [dcc.Location(id="url"), dashsubcomponents.sidebar, content, WebSocket(url="ws://192.168.8.218:5300/", id="ws")])
+    [dcc.Location(id="url"), dashsubcomponents.sidebar, content, WebSocket(url="ws://localhost:5300/", id="ws")])
 
 @app.callback(Output("ws", "send"), Output("hidden_div_for_redirect_callback", "children"), Input('startLiveTransmit', 'n_clicks'), prevent_initial_call=True)
 def send(n_clicks):
