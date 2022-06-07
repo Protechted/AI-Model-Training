@@ -9,13 +9,17 @@ from matplotlib import pyplot as plt
 import dashsubcomponents
 from dash import Dash
 import dash
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 from dash_extensions import WebSocket
 from dash_extensions.enrich import Output, DashProxy, Input, MultiplexerTransform
 import dash_bootstrap_components as dbc
 from dash import Output, html, dcc, Input, ctx
 import pandas as pd
 import plotly.tools as tls
+from util.insert import insert_data
+
+
+training_data: pd.DataFrame = None
 
 # Create example app.
 app = DashProxy(prevent_initial_callbacks=True, transforms=[MultiplexerTransform()], external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -27,12 +31,12 @@ CONTENT_STYLE = {
 }
 
 websocket = html.Div([
-    dcc.Input(id="input", autoComplete="off"), html.Div(id="message"),
+    dcc.Input(id="input", autoComplete="off", style={'display':'none'}), html.Div(id="message"),
 ])
 
 mltraining = html.Div(
-    [html.P("""Commands: "start" to start the Training. Results will be plotted when the training finished. """),
-     dbc.Button('Start training', id='starttraining', n_clicks=0),html.Div(style={"margin-top": "5px"}), websocket])
+    [html.P("""Commands: "start" to start the Training. Results will be plotted when the training finished. """),html.Div([html.Div([html.H5('Klasse:',style={'display':'inline-block',"margin-right": "3px"}), dcc.Input(id="inputKlasse", autoComplete="off")]),html.Div([html.H5('Subject:',style={'display':'inline-block',"margin-right": "3px"}), dcc.Input(id="inputSubject", autoComplete="off")])], style={'display':'inline-block'}),
+     dbc.Button('Start training', id='starttraining', n_clicks=0, style={"margin-left": "5px"}),dbc.Button('Upload training', id='savetraining', n_clicks=0, style={"margin-left": "5px"}),html.Div(style={"margin-top": "5px"}), websocket, html.Div(id='stateoutput')])
 mainpage = html.Div([html.P("Willkommen"), websocket])
 liveData = html.Div(
     [html.P("""Live Data from the sensor. Commands: "live" to start the live Transmitting, "stopLive" to stop it. """),
@@ -48,6 +52,17 @@ app.layout = html.Div(
 @app.callback(Output("ws", "send"), Output("hidden_div_for_redirect_callback", "children"), Input('startLiveTransmit', 'n_clicks'), prevent_initial_call=True)
 def send(n_clicks):
     return "live", dcc.Location(pathname="/livedata", id="someid_doesnt_matter")
+
+@app.callback(Input('savetraining', 'n_clicks'), State('inputKlasse', 'value'), State('inputSubject', 'value'), Output('stateoutput','children'), prevent_initial_call=True)
+def send(n_clicks,valueKlasse,valueSubject):
+    global training_data
+    if training_data is not None:
+        print("Starting Saving Training data!")
+        insert_data(training_data,valueKlasse,valueSubject)
+        training_data = None
+        return "Training saving - Success"
+    return "Failure!"
+
 
 @app.callback(Output("ws", "send"), Input('stopLiveTransmit', 'n_clicks'), prevent_initial_call=True)
 def send(n_clicks):
@@ -89,7 +104,8 @@ def message(e):
     if str(e['data']).startswith("dataframeoutput:"):
         dataframe_string = str(e['data']).split("dataframeoutput:")[1]
         loaded_df = pd.read_json(dataframe_string, orient='index')
-
+        global training_data
+        training_data = loaded_df
         print(loaded_df)
         print(loaded_df['ax'].tolist())
 

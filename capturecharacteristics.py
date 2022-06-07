@@ -5,7 +5,6 @@ import websockets
 import json
 import pandas as pd
 from websockets.legacy.server import WebSocketServer
-from util.insert import insert_data
 
 CLIENTS = set()
 
