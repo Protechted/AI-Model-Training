@@ -282,6 +282,7 @@ void calibrate() {
 
       if(pressureCharacteristic.subscribed()){
         p = pressure.value() - baseline_p;
+        baseline_p = pressure.value();
         pressureCharacteristic.writeValue(p);  
       }
 
