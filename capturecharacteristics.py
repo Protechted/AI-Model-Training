@@ -1,6 +1,7 @@
 import asyncio
 import struct
 from collections import deque
+from tabnanny import verbose
 from threading import Thread
 from typing import Deque
 
@@ -8,9 +9,10 @@ from bleak import BleakClient
 import websockets
 import json
 import pandas as pd
+import tensorflow as tf
+import numpy as np
 
 CLIENTS = set()
-
 
 sample_dict_list: list[dict] = []
 sample_count_int: int = 0
@@ -29,6 +31,8 @@ gyroscope_uuid = "19b10000-6001-537e-4f6c-d104768a1214" # 3 times 4 byte float32
 quaternion_uuid = "19b10000-7001-537e-4f6c-d104768a1214" # 4 times 4 byte float32 in an array
 pressure_uuid = "19b10000-4001-537e-4f6c-d104768a1214" # 4 times 4 byte float32 in an array
 bundled_uuid = "19b10000-1002-537e-4f6c-d104768a1214" # Array of 11x 4 Bytes, AX,AY,AZ,GX,GY,GZ,QX,QY,QW,QZ,P
+
+model = tf.keras.models.load_model("./models/model_0.75.h5")
 
 def sample_id_callback(handle, data):
     # print(handle, data)
@@ -61,7 +65,10 @@ def pressure_data_callback(handle, data):
 
 
 def model_predict(collected_data, mlmodel):
-    print("Test")
+    collected_data = [list(sample.values()) for sample in collected_data]
+    collected_data = np.array(collected_data)
+    probability = mlmodel.predict(np.expand_dims(collected_data, axis=0), verbose=0)[0]
+    print(probability)
 
 def bundle_callback(handle, data):
     # print(handle, data)
@@ -81,8 +88,9 @@ def bundle_callback(handle, data):
         collected_data.append(sample_dict)
         moving_window_tick_counter += 1
         if moving_window_tick_counter > 200:
-            thread = Thread(target=model_predict, args=(list(collected_data),None))
-            thread.start()
+            if moving_window_tick_counter % 2 == 0:
+                thread = Thread(target=model_predict, args=(list(collected_data),model))
+                thread.start()
 
     if startcapture:
         sample_count_int +=1
