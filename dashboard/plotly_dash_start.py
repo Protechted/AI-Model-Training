@@ -36,7 +36,7 @@ websocket = html.Div([
 
 mltraining = html.Div(
     [html.P("""Commands: "start" to start the Training. Results will be plotted when the training finished. """),html.Div([html.Div([html.H5('Klasse:',style={'display':'inline-block',"margin-right": "3px"}), dcc.Input(id="inputKlasse", autoComplete="off")]),html.Div([html.H5('Subject:',style={'display':'inline-block',"margin-right": "3px"}), dcc.Input(id="inputSubject", autoComplete="off")])], style={'display':'inline-block'}),
-     dbc.Button('Start training', id='starttraining', n_clicks=0, style={"margin-left": "5px"}),dbc.Button('Upload training', id='savetraining', n_clicks=0, style={"margin-left": "5px"}),html.Div(style={"margin-top": "5px"}),html.Div(id='stateoutput'), websocket])
+     dbc.Button('Start training', id='starttraining', n_clicks=0, style={"margin-left": "5px"}),dbc.Button('Upload training', id='savetraining', n_clicks=0, style={"margin-left": "5px"}),dbc.Button('Start timer', id='starttimer', n_clicks=0, style={"margin-left": "5px"}),html.Div(style={"margin-top": "5px"}), websocket, html.Div(id='stateoutput')])
 mainpage = html.Div([html.P("Willkommen"), websocket])
 liveData = html.Div(
     [html.P("""Live Data from the sensor. Commands: "live" to start the live Transmitting, "stopLive" to stop it. """),
@@ -194,6 +194,11 @@ YforAx = deque(maxlen=50)
 YforAy = deque(maxlen=50)
 YforAz = deque(maxlen=50)
 
+YforGx = deque(maxlen=50)
+YforGy = deque(maxlen=50)
+YforGz = deque(maxlen=50)
+
+
 
 @app.callback(Output("live-graph-accelerometer", "figure"), [Input("ws", "message")])
 def message(e):
@@ -202,6 +207,10 @@ def message(e):
     global YforAx
     global YforAy
     global YforAz
+
+    global YforGx
+    global YforGy
+    global YforGz
     if str(e['data']) == None:
         return
     if (str(e['data']).startswith("liveData:")):

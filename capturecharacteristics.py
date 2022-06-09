@@ -1,18 +1,25 @@
 import asyncio
 import struct
+from collections import deque
+from threading import Thread
+from typing import Deque
+
 from bleak import BleakClient
 import websockets
 import json
 import pandas as pd
-from websockets.legacy.server import WebSocketServer
 
 CLIENTS = set()
 
 
-sample_dict_list = []
+sample_dict_list: list[dict] = []
 sample_count_int: int = 0
 startcapture: bool = False
 liveTransmit: bool = False
+modelaction: bool = True
+
+collected_data: Deque[dict] = deque(maxlen=200)
+moving_window_tick_counter: int = 0
 
 sample_id_uuid = "19b10000-0001-537e-4f6c-d104768a1214" # 4 Byte float32
 temperature_uuid = "19b10000-2001-537e-4f6c-d104768a1214" # 4 Byte float32
@@ -53,17 +60,33 @@ def pressure_data_callback(handle, data):
     # print(pressure)
 
 
+def model_predict(collected_data, mlmodel):
+    print("Test")
+
 def bundle_callback(handle, data):
     # print(handle, data)
     [ax, ay, az, gx, gy, gz, qx, qy, qz, qw, p] = struct.unpack('fffffffffff', data)
     # asyncio.create_task(broadcastMessage(f"New Values came in: {ax}"))
+    sample_dict = {"ax": ax, "ay": ay, "az": az, "gx": gx, "gy": gy, "gz": gz, "qx": qx, "qy": qy, "qz": qz,
+                   "qw": qw, "p": p}
     global sample_count_int
     global startcapture
+    global liveTransmit
+    global modelaction
     global sample_dict_list
+    global collected_data
+    global moving_window_tick_counter
+
+    if modelaction:
+        collected_data.append(sample_dict)
+        moving_window_tick_counter += 1
+        if moving_window_tick_counter > 200:
+            thread = Thread(target=model_predict, args=(list(collected_data),None))
+            thread.start()
+
     if startcapture:
         sample_count_int +=1
-        sample_dict = {"ax": ax, "ay": ay, "az": az, "gx": gx, "gy": gy, "gz": gz, "qx": qx, "qy": qy, "qz": qz,
-                       "qw": qw, "p": p}
+
         sample_dict_list.append(sample_dict)
         print(sample_count_int)
         if sample_count_int == 200:
