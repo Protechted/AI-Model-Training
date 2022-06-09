@@ -16,7 +16,7 @@ import dash_bootstrap_components as dbc
 from dash import Output, html, dcc, Input, ctx
 import pandas as pd
 import plotly.tools as tls
-from util.insert import insert_data
+from insert import insert_data
 
 
 training_data: pd.DataFrame = None
@@ -36,7 +36,7 @@ websocket = html.Div([
 
 mltraining = html.Div(
     [html.P("""Commands: "start" to start the Training. Results will be plotted when the training finished. """),html.Div([html.Div([html.H5('Klasse:',style={'display':'inline-block',"margin-right": "3px"}), dcc.Input(id="inputKlasse", autoComplete="off")]),html.Div([html.H5('Subject:',style={'display':'inline-block',"margin-right": "3px"}), dcc.Input(id="inputSubject", autoComplete="off")])], style={'display':'inline-block'}),
-     dbc.Button('Start training', id='starttraining', n_clicks=0, style={"margin-left": "5px"}),dbc.Button('Upload training', id='savetraining', n_clicks=0, style={"margin-left": "5px"}),html.Div(style={"margin-top": "5px"}), websocket, html.Div(id='stateoutput')])
+     dbc.Button('Start training', id='starttraining', n_clicks=0, style={"margin-left": "5px"}),dbc.Button('Upload training', id='savetraining', n_clicks=0, style={"margin-left": "5px"}),html.Div(style={"margin-top": "5px"}),html.Div(id='stateoutput'), websocket])
 mainpage = html.Div([html.P("Willkommen"), websocket])
 liveData = html.Div(
     [html.P("""Live Data from the sensor. Commands: "live" to start the live Transmitting, "stopLive" to stop it. """),
