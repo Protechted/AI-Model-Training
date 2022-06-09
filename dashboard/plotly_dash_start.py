@@ -213,15 +213,7 @@ def message(e):
         YforAy.append(dict_values["ay"])
         YforAz.append(dict_values["az"])
 
-        figure = {
-            'data': [
-                {"x": list[X], "y": list[YforAx], 'type': 'line', 'name': 'ax'},
-            ],
-            'layout': {
-                'title': 'Live Data Graph',
-                'showlegend': 'true'
-            }
-        }
+
         dataAx = plotly.graph_objs.Scatter(
             x=list(X),
             y=list(YforAx),
