@@ -31,6 +31,3 @@ def insert_data(data_df: pd.DataFrame, label: str, subject: str = "test"):
             conn.commit()
 
         print("Data inserted")
-
-if __name__ == "__main__":
-    main()
