@@ -5,6 +5,7 @@ import numpy as np
 import plotly
 import plotly.graph_objs as go
 from matplotlib import pyplot as plt
+from dash_extensions import DeferScript
 
 import dashsubcomponents
 from dash import Dash
@@ -35,8 +36,8 @@ websocket = html.Div([
 ])
 
 mltraining = html.Div(
-    [html.P("""Commands: "start" to start the Training. Results will be plotted when the training finished. """),html.Div([html.Div([html.H5('Klasse:',style={'display':'inline-block',"margin-right": "3px"}), dcc.Input(id="inputKlasse", autoComplete="off")]),html.Div([html.H5('Subject:',style={'display':'inline-block',"margin-right": "3px"}), dcc.Input(id="inputSubject", autoComplete="off")])], style={'display':'inline-block'}),
-     dbc.Button('Start training', id='starttraining', n_clicks=0, style={"margin-left": "5px"}),dbc.Button('Upload training', id='savetraining', n_clicks=0, style={"margin-left": "5px"}),dbc.Button('Start timer', id='starttimer', n_clicks=0, style={"margin-left": "5px"}),html.Div(style={"margin-top": "5px"}), websocket, html.Div(id='stateoutput')])
+    [html.P("""Commands: "start" to start the Training. Results will be plotted when the training finished. """), html.Div([html.Div([html.H5('Klasse:',style={'display':'inline-block',"margin-right": "3px"}), dcc.Input(id="inputKlasse", autoComplete="off")]),html.Div([html.H5('Subject:',style={'display':'inline-block',"margin-right": "3px"}), dcc.Input(id="inputSubject", autoComplete="off")])], style={'display':'inline-block'}),
+     dbc.Button('Start training', id='starttraining', n_clicks=0, style={"margin-left": "5px"}), dbc.Button('Upload training', id='savetraining', n_clicks=0, style={"margin-left": "5px"}), dbc.Button('Start timer', id='starttimer', n_clicks=0, style={"margin-left": "5px"}), html.Div(style={"margin-top": "5px"}), html.Div(id='stateoutput'), websocket]) # DeferScript(src='assets/custom-js.js')
 mainpage = html.Div([html.P("Willkommen"), websocket])
 liveData = html.Div(
     [html.P("""Live Data from the sensor. Commands: "live" to start the live Transmitting, "stopLive" to stop it. """),
@@ -47,7 +48,7 @@ liveData = html.Div(
 
 content = html.Div(id="page-content", style=CONTENT_STYLE)
 app.layout = html.Div(
-    [dcc.Location(id="url"), dashsubcomponents.sidebar, content, WebSocket(url="ws://localhost:5300/", id="ws")])
+    [dcc.Location(id="url"), dashsubcomponents.sidebar, content, WebSocket(url="ws://127.0.0.1:5300/", id="ws")])
 
 @app.callback(Output("ws", "send"), Output("hidden_div_for_redirect_callback", "children"), Input('startLiveTransmit', 'n_clicks'), prevent_initial_call=True)
 def send(n_clicks):
@@ -70,7 +71,7 @@ def send(n_clicks):
 
 @app.callback(Output("ws", "send"), Input('starttraining', 'n_clicks'), prevent_initial_call=True)
 def send(n_clicks):
-    print("Test")
+    print("Started Training click received")
     return "start"
 
 @app.callback(Output("ws", "send"), Input("input", "value"), prevent_initial_call=True)
