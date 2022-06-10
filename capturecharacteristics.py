@@ -3,7 +3,7 @@ import struct
 from collections import deque
 from tabnanny import verbose
 from threading import Thread
-from typing import Deque
+from typing import Deque, List
 
 from bleak import BleakClient
 import websockets
@@ -14,11 +14,17 @@ import numpy as np
 
 CLIENTS = set()
 
-sample_dict_list: list[dict] = []
+sample_dict_list: List[dict] = []
 sample_count_int: int = 0
 startcapture: bool = False
+
+startcapturecontinous: bool = False
+sample_count_continous_int: int = 0
+sample_dict_list_continous: List[dict] = []
+
+
 liveTransmit: bool = False
-modelaction: bool = True
+modelaction: bool = False
 
 collected_data: Deque[dict] = deque(maxlen=200)
 moving_window_tick_counter: int = 0
@@ -108,9 +114,23 @@ def bundle_callback(handle, data):
             print(result)
 
         print(f"{ax}, {ay}, {az}, {gx}, {gy}, {gz}, {qx}, {qy}, {qz}, {qw}, {p}")
+
+    if startcapturecontinous:
+        global sample_count_continous_int
+        global sample_dict_list_continous
+        sample_count_continous_int +=1
+        sample_dict_list_continous.append(sample_dict)
+        if (sample_count_continous_int == 200):
+            sample_count_continous_int = 0
+            sample_df = pd.DataFrame(sample_dict_list_continous)
+            result = sample_df.to_json(orient="index")
+            asyncio.create_task(broadcastMessage("dataframeoutputcontinous:" + result))
+            sample_dict_list_continous = []
+            print("Sent Continous Sample of 200 Ticks")
+
+
+
     if liveTransmit:
-        sample_dict = {"ax": ax, "ay": ay, "az": az, "gx": gx, "gy": gy, "gz": gz, "qx": qx, "qy": qy, "qz": qz,
-                       "qw": qw, "p": p}
         asyncio.create_task(broadcastMessage("liveData:" + json.dumps(sample_dict)))
 
 
@@ -161,6 +181,10 @@ async def handler(websocket):
                 global startcapture
                 startcapture = True
                 print("StartCapture state:" + str(startcapture))
+            if msg == "startcontinoustraining":
+                global startcapturecontinous
+                startcapturecontinous = True
+                print("StartCaptureContinous state for continous Training:" + str(startcapturecontinous))
             if msg == "live":
                 liveTransmit = True
                 print("LiveTransmit state:" + str(liveTransmit))
