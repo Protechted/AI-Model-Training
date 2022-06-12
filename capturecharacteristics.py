@@ -6,6 +6,8 @@ from threading import Thread
 from typing import Deque, List
 
 from bleak import BleakClient
+#import pickle
+#import xgboost as xgb
 import websockets
 import json
 import pandas as pd
@@ -24,7 +26,7 @@ sample_dict_list_continous: List[dict] = []
 
 
 liveTransmit: bool = False
-modelaction: bool = False
+modelaction: bool = True
 
 collected_data: Deque[dict] = deque(maxlen=200)
 moving_window_tick_counter: int = 0
@@ -38,7 +40,11 @@ quaternion_uuid = "19b10000-7001-537e-4f6c-d104768a1214" # 4 times 4 byte float3
 pressure_uuid = "19b10000-4001-537e-4f6c-d104768a1214" # 4 times 4 byte float32 in an array
 bundled_uuid = "19b10000-1002-537e-4f6c-d104768a1214" # Array of 11x 4 Bytes, AX,AY,AZ,GX,GY,GZ,QX,QY,QW,QZ,P
 
-model = tf.keras.models.load_model("./models/model_0.75.h5")
+
+#model = xgb.Booster(model_file="./models/xgb_model_1.bin")
+# predict the test data
+model = tf.keras.models.load_model("./models/model_0.67.h5")
+#model = pickle.load(open("models/naive_bayes.sav", 'rb'))
 
 def sample_id_callback(handle, data):
     # print(handle, data)
@@ -71,9 +77,15 @@ def pressure_data_callback(handle, data):
 
 
 def model_predict(collected_data, mlmodel):
+    #print("test model predict")
     collected_data = [list(sample.values()) for sample in collected_data]
     collected_data = np.array(collected_data)
-    probability = mlmodel.predict(np.expand_dims(collected_data, axis=0), verbose=0)[0]
+    probability = mlmodel.predict(np.expand_dims(collected_data, axis=0), verbose=0)[0][0]
+    # flatten the array (if necessary)
+    #collected_data = collected_data.reshape(collected_data.shape[0] * collected_data.shape[1])
+    #probability = mlmodel.predict(np.expand_dims(collected_data,0))
+    #probability = mlmodel.predict(xgb.DMatrix(np.expand_dims(collected_data,0)))
+
     print(probability)
 
 def bundle_callback(handle, data):
