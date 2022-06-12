@@ -50,7 +50,7 @@ bundled_uuid = "19b10000-1002-537e-4f6c-d104768a1214" # Array of 11x 4 Bytes, AX
 
 #model = xgb.Booster(model_file="./models/xgb_model_1.bin")
 # predict the test data
-model = tf.keras.models.load_model("./models/model_0.67.h5")
+model = tf.keras.models.load_model("./models/model_0.48.h5")
 #model = pickle.load(open("models/naive_bayes.sav", 'rb'))
 
 def model_predict(collected_data: List[dict], mlmodel, last_x_probabilities: Deque[float]):
@@ -204,6 +204,6 @@ async def handler(websocket):
 
 if __name__ == "__main__":
     address = "02D307CC-39AB-9D1B-A279-6B8245193D28"
-    address = "42D1EB68-5EDF-85F9-D05E-82E0AD1CBD94"
+    #address = "42D1EB68-5EDF-85F9-D05E-82E0AD1CBD94"
     print('address:', address)
     asyncio.run(main(address))
