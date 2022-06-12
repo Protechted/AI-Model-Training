@@ -29,7 +29,7 @@ async def run_websocket():
             if str(answer).startswith("dataframeoutputcontinous:"):
                 dataframe_string = str(answer).split("dataframeoutputcontinous:")[1]
                 loaded_df = pd.read_json(dataframe_string, orient='index')
-                thread = Thread(target=insert_data, args=(loaded_df, "D4", "HandLiegtAufTischMitRotation"))
+                thread = Thread(target=insert_data, args=(loaded_df, "D4", "ContinousTraining_Daniel"))
                 thread.start()
                 print("Inserted Continous Training Data")
 
