@@ -30,7 +30,7 @@ sample_dict_list_continous: List[dict] = []
 
 liveTransmit: bool = False  # Is controlled via the dashboard, enables live data transmission over the websocket
 modelaction: bool = True  # Enables the live ML-Model prediction
-sendNotifications: bool = False  # Enables the sending of emergency Notifications to the Backend
+sendNotifications: bool = True  # Enables the sending of emergency Notifications to the Backend
 
 collected_data: Deque[dict] = deque(maxlen=200)
 moving_window_tick_counter: int = 0
@@ -65,22 +65,11 @@ def gyroscope_data_callback(handle, data):
 def quaternation_data_callback(handle, data):
     # print(handle, data)
     [x, y, z, w] = struct.unpack('ffff', data)
-last_x_probabilities: Deque[float] = deque(maxlen=20)
+
+last_x_probabilities: Deque[float] = deque(maxlen=50)
 averaging_tick_counter: int = 0
 
-sample_id_uuid = "19b10000-0001-537e-4f6c-d104768a1214"  # 4 Byte float32
-temperature_uuid = "19b10000-2001-537e-4f6c-d104768a1214"  # 4 Byte float32
-humidity_uuid = "19b10000-3001-537e-4f6c-d104768a1214"  # 1 byte Uint8
-accelerometer_uuid = "19b10000-5001-537e-4f6c-d104768a1214"  # 3 times 4 byte float32 in an array
-gyroscope_uuid = "19b10000-6001-537e-4f6c-d104768a1214"  # 3 times 4 byte float32 in an array
-quaternion_uuid = "19b10000-7001-537e-4f6c-d104768a1214"  # 4 times 4 byte float32 in an array
-pressure_uuid = "19b10000-4001-537e-4f6c-d104768a1214"  # 4 times 4 byte float32 in an array
-bundled_uuid = "19b10000-1002-537e-4f6c-d104768a1214"  # Array of 11x 4 Bytes, AX,AY,AZ,GX,GY,GZ,QX,QY,QW,QZ,P
-
-model = tf.keras.models.load_model("./models/model_0.75.h5")
-
-
-def model_predict(collected_data, mlmodel):
+def model_predict(collected_data: List[dict], mlmodel, last_x_probabilities: Deque[float]):
     #print("test model predict")
     collected_data = [list(sample.values()) for sample in collected_data]
     collected_data = np.array(collected_data)
@@ -89,8 +78,8 @@ def model_predict(collected_data, mlmodel):
     #collected_data = collected_data.reshape(collected_data.shape[0] * collected_data.shape[1])
     #probability = mlmodel.predict(np.expand_dims(collected_data,0))
     #probability = mlmodel.predict(xgb.DMatrix(np.expand_dims(collected_data,0)))
-
-    print(probability)
+    last_x_probabilities.append(probability)
+    #print(probability)
 
 def bundle_callback(handle, data):
     # print(handle, data)
@@ -116,10 +105,10 @@ def bundle_callback(handle, data):
                 thread = Thread(target=model_predict, args=(list(collected_data), model, last_x_probabilities))
                 thread.start()
                 averaging_tick_counter += 1
-                if averaging_tick_counter == 20:
-                    averageprob: float = average_of_list(last_x_probabilities)[0]
+                if averaging_tick_counter == 50:
+                    averageprob: float = average_of_list(last_x_probabilities)
                     print("AverageProbability: " + str(averageprob))
-                    if averageprob >= 0.80:
+                    if averageprob >= 0.95:
                         if sendNotifications:
                             timestamp: str = datetime.datetime.now().isoformat()
                             print("Executing Emergency REST call at " + timestamp + "with a probability of: " + str(
@@ -229,6 +218,6 @@ async def handler(websocket):
 
 if __name__ == "__main__":
     address = "02D307CC-39AB-9D1B-A279-6B8245193D28"
-    address = "42D1EB68-5EDF-85F9-D05E-82E0AD1CBD94"
+    #address = "42D1EB68-5EDF-85F9-D05E-82E0AD1CBD94"
     print('address:', address)
     asyncio.run(main(address))
