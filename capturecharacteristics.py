@@ -34,7 +34,7 @@ modelaction: bool = True  # Enables the live ML-Model prediction
 sendNotifications: bool = True  # Enables the sending of emergency Notifications to the Backend
 enableDeviceHeartbeat: bool = True # Enables a periodic sending of device information, 60s interval
 
-collected_data: Deque[dict] = deque(maxlen=200)
+collected_data: Deque[dict] = deque(maxlen=150)
 moving_window_tick_counter: int = 0
 
 last_x_probabilities: Deque[float] = deque(maxlen=50)
@@ -50,7 +50,7 @@ bundled_uuid = "19b10000-1002-537e-4f6c-d104768a1214" # Array of 11x 4 Bytes, AX
 
 #model = xgb.Booster(model_file="./models/xgb_model_1.bin")
 # predict the test data
-model = tf.keras.models.load_model("./models/model_0.48.h5")
+model = tf.keras.models.load_model("./models/gru_classifier_1.h5")
 #model = pickle.load(open("models/naive_bayes.sav", 'rb'))
 
 def model_predict(collected_data: List[dict], mlmodel, last_x_probabilities: Deque[float]):
@@ -63,7 +63,7 @@ def model_predict(collected_data: List[dict], mlmodel, last_x_probabilities: Deq
     #probability = mlmodel.predict(np.expand_dims(collected_data,0))
     #probability = mlmodel.predict(xgb.DMatrix(np.expand_dims(collected_data,0)))
     last_x_probabilities.append(probability)
-    print(probability)
+    #print(probability)
 
 def bundle_callback(handle, data):
     # print(handle, data)
@@ -89,10 +89,10 @@ def bundle_callback(handle, data):
                 thread = Thread(target=model_predict, args=(list(collected_data), model, last_x_probabilities))
                 thread.start()
                 averaging_tick_counter += 1
-                if averaging_tick_counter == 50:
+                if averaging_tick_counter == 20:
                     averageprob: float = average_of_list(last_x_probabilities)
                     print("AverageProbability: " + str(averageprob))
-                    if averageprob >= 0.95:
+                    if averageprob >= 0.90:
                         if sendNotifications:
                             timestamp: str = datetime.datetime.now().isoformat()
                             print("Executing Emergency REST call at " + timestamp + "with a probability of: " + str(
