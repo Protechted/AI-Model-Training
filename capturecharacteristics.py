@@ -6,6 +6,7 @@ from threading import Thread
 from typing import Deque, List
 from util.send_fall_detected_request import execute_fall_detected_request
 from util.list_util import average_of_list
+from util.send_device_status import execute_device_heartbeat
 from callbacks import *
 
 from bleak import BleakClient
@@ -31,13 +32,15 @@ sample_dict_list_continous: List[dict] = []
 liveTransmit: bool = False  # Is controlled via the dashboard, enables live data transmission over the websocket
 modelaction: bool = True  # Enables the live ML-Model prediction
 sendNotifications: bool = True  # Enables the sending of emergency Notifications to the Backend
+enableDeviceHeartbeat: bool = True # Enables a periodic sending of device information, 60s interval
 
 collected_data: Deque[dict] = deque(maxlen=200)
 moving_window_tick_counter: int = 0
 
+last_x_probabilities: Deque[float] = deque(maxlen=50)
+averaging_tick_counter: int = 0
+
 sample_id_uuid = "19b10000-0001-537e-4f6c-d104768a1214" # 4 Byte float32
-temperature_uuid = "19b10000-2001-537e-4f6c-d104768a1214" # 4 Byte float32
-humidity_uuid = "19b10000-3001-537e-4f6c-d104768a1214" # 1 byte Uint8
 accelerometer_uuid = "19b10000-5001-537e-4f6c-d104768a1214" # 3 times 4 byte float32 in an array
 gyroscope_uuid = "19b10000-6001-537e-4f6c-d104768a1214" # 3 times 4 byte float32 in an array
 quaternion_uuid = "19b10000-7001-537e-4f6c-d104768a1214" # 4 times 4 byte float32 in an array
@@ -50,25 +53,6 @@ bundled_uuid = "19b10000-1002-537e-4f6c-d104768a1214" # Array of 11x 4 Bytes, AX
 model = tf.keras.models.load_model("./models/model_0.67.h5")
 #model = pickle.load(open("models/naive_bayes.sav", 'rb'))
 
-def sample_id_callback(handle, data):
-    # print(handle, data)
-    [sample_id] = struct.unpack('f', data)
-    # print(f"ID: {sample_id}")
-
-
-def gyroscope_data_callback(handle, data):
-    # print(handle, data)
-    [x, y, z] = struct.unpack('fff', data)
-    # print(f"{x}, {y}, {z}")
-
-
-def quaternation_data_callback(handle, data):
-    # print(handle, data)
-    [x, y, z, w] = struct.unpack('ffff', data)
-
-last_x_probabilities: Deque[float] = deque(maxlen=50)
-averaging_tick_counter: int = 0
-
 def model_predict(collected_data: List[dict], mlmodel, last_x_probabilities: Deque[float]):
     #print("test model predict")
     collected_data = [list(sample.values()) for sample in collected_data]
@@ -79,7 +63,7 @@ def model_predict(collected_data: List[dict], mlmodel, last_x_probabilities: Deq
     #probability = mlmodel.predict(np.expand_dims(collected_data,0))
     #probability = mlmodel.predict(xgb.DMatrix(np.expand_dims(collected_data,0)))
     last_x_probabilities.append(probability)
-    #print(probability)
+    print(probability)
 
 def bundle_callback(handle, data):
     # print(handle, data)
@@ -171,15 +155,17 @@ async def main(address):
         await client.start_notify(pressure_uuid, pressure_data_callback)
         await client.start_notify(bundled_uuid, bundle_callback)
         client.set_disconnected_callback(disconnected_callback)
-        # temp_bytes = await client.read_gatt_char(temperature_uuid)         #print(hexlify(temp_bytes))
-        # [temperature] = struct.unpack('f', temp_bytes)
-        # print(temperature)
 
-        # humidity_bytes = await client.read_gatt_char(humidity_uuid)
-        # [humidity] = struct.unpack('i', humidity_bytes)
-        # print(humidity)
         async with websockets.serve(handler, "0.0.0.0", 5300) as websocket:
-            await asyncio.Future()  # run forever
+            pass
+        if enableDeviceHeartbeat:
+            while True:
+                await asyncio.gather(
+                    asyncio.sleep(60),
+                    execute_device_heartbeat(client=client),
+                )
+
+        await asyncio.Future()  # run forever
         # await client.stop_notify(accelerometer_uuid)
 
 
@@ -218,6 +204,6 @@ async def handler(websocket):
 
 if __name__ == "__main__":
     address = "02D307CC-39AB-9D1B-A279-6B8245193D28"
-    #address = "42D1EB68-5EDF-85F9-D05E-82E0AD1CBD94"
+    address = "42D1EB68-5EDF-85F9-D05E-82E0AD1CBD94"
     print('address:', address)
     asyncio.run(main(address))
