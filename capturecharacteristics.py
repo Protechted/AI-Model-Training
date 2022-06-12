@@ -91,7 +91,7 @@ def bundle_callback(handle, data):
                 thread = Thread(target=model_predict, args=(list(collected_data), model, last_x_probabilities))
                 thread.start()
                 averaging_tick_counter += 1
-                if averaging_tick_counter == 50:
+                if averaging_tick_counter == 20:
                     averageprob: float = average_of_list(last_x_probabilities)
                     print("AverageProbability: " + str(averageprob))
                     if averageprob >= 0.90:
