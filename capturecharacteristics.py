@@ -157,15 +157,14 @@ async def main(address):
         client.set_disconnected_callback(disconnected_callback)
 
         async with websockets.serve(handler, "0.0.0.0", 5300) as websocket:
-            pass
-        if enableDeviceHeartbeat:
-            while True:
-                await asyncio.gather(
-                    asyncio.sleep(60),
-                    execute_device_heartbeat(client=client),
-                )
-
-        await asyncio.Future()  # run forever
+            if enableDeviceHeartbeat:
+                while True:
+                    await asyncio.gather(
+                        asyncio.sleep(60),
+                        execute_device_heartbeat(client=client),
+                    )
+            await asyncio.Future()  # run forever
+        await asyncio.Future() # In case the Websocket crashes, the application should still run, the websocket is not essential for production
         # await client.stop_notify(accelerometer_uuid)
 
 
