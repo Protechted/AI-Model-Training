@@ -8,6 +8,8 @@ from util.send_fall_detected_request import execute_fall_detected_request
 from util.list_util import average_of_list
 from util.send_device_status import execute_device_heartbeat
 from callbacks import *
+from tensorflow_addons.metrics import F1Score
+
 
 from bleak import BleakClient
 #import pickle
@@ -31,7 +33,7 @@ sample_dict_list_continous: List[dict] = []
 
 liveTransmit: bool = False  # Is controlled via the dashboard, enables live data transmission over the websocket
 modelaction: bool = True  # Enables the live ML-Model prediction
-sendNotifications: bool = True  # Enables the sending of emergency Notifications to the Backend
+sendNotifications: bool = False  # Enables the sending of emergency Notifications to the Backend
 enableDeviceHeartbeat: bool = True # Enables a periodic sending of device information, 60s interval
 
 collected_data: Deque[dict] = deque(maxlen=150)
@@ -89,7 +91,7 @@ def bundle_callback(handle, data):
                 thread = Thread(target=model_predict, args=(list(collected_data), model, last_x_probabilities))
                 thread.start()
                 averaging_tick_counter += 1
-                if averaging_tick_counter == 20:
+                if averaging_tick_counter == 50:
                     averageprob: float = average_of_list(last_x_probabilities)
                     print("AverageProbability: " + str(averageprob))
                     if averageprob >= 0.90:
