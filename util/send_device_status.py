@@ -16,17 +16,19 @@ async def execute_device_heartbeat(client):
     humidity_bytes = await client.read_gatt_char(humidity_uuid)
     [humidity] = struct.unpack('I', humidity_bytes)
     print("Humidity at the moment:" + str(humidity))
-    #execute_request_thread = Thread(target=send_device_heartbeat_request,
-    #                                args=(temperature, humidity))
-    #execute_request_thread.start()
+    execute_request_thread = Thread(target=send_device_heartbeat_request,
+                                    args=(temperature, humidity))
+    execute_request_thread.start()
 
 
 def send_device_heartbeat_request(temperature, humidity):
     url = "https://europe-west1-erudite-visitor-336410.cloudfunctions.net/updateDeviceState"
 
     payload = json.dumps({
-        "deviceId": "did__1",
-        "batteryLevel": 100
+        "deviceId": "did_0001",
+        "batteryLevel": 100,
+        "temperature": temperature,
+        "humidity": humidity
     })
     headers = {
         'Content-Type': 'application/json'
@@ -34,4 +36,4 @@ def send_device_heartbeat_request(temperature, humidity):
 
     response = requests.request("POST", url, headers=headers, data=payload)
 
-    print(response.text)
+    print("Response form Heartbeat Request:" + str(response.text))
