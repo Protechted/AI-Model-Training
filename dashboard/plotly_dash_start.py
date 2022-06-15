@@ -125,7 +125,7 @@ def message(e):
                 ],
                 'layout': {
                     'title': 'Recorded Data Graph- Accelerometer',
-                    'showlegend': 'true'
+                    'showlegend': 'true',
                 }
             }
         ),
@@ -239,9 +239,9 @@ def message(e):
             y=list(YforAz),
             name='AccelerometerZ',
         )
-
+        # fix axis range to -1 to 1
         return {'data': [dataAx, dataAy, dataAz],
-                'layout': go.Layout(xaxis=dict(range=[min(X), max(X)]), uirevision=True)}
+                'layout': go.Layout(xaxis=dict(range=[min(X), max(X)]), uirevision=True, yaxis=dict(range=[-1, 1]))}
 
 
 if __name__ == '__main__':
