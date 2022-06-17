@@ -43,8 +43,12 @@ liveData = html.Div(
     [html.P("""Live Data from the sensor. Commands: "live" to start the live Transmitting, "stopLive" to stop it. """),
      html.Div(id="hidden_div_for_redirect_callback"),
      dbc.Button('Start live transmit', id='startLiveTransmit', n_clicks=0, style={"margin-right": "4px"}),dbc.Button('Stop live transmit', id='stopLiveTransmit', n_clicks=0),html.Div(style={"margin-top": "5px"}), websocket, html.Br(),
+    html.H2("Quaternion Visualization"),
+    html.Iframe(src="http://localhost:3000/",
+                style={"height": "300px", "width": "100%"}),
      html.H2("Daten Beschleunigungssensor"),
-     dcc.Graph(id='live-graph-accelerometer', animate=False, config={"responsive": True})])
+     dcc.Graph(id='live-graph-accelerometer', animate=False, config={"responsive": True}),
+     dcc.Store(id='live-data-store', data={"ax": [], "ay": [], "az": []})])
 
 content = html.Div(id="page-content", style=CONTENT_STYLE)
 app.layout = html.Div(
@@ -199,50 +203,180 @@ YforGx = deque(maxlen=50)
 YforGy = deque(maxlen=50)
 YforGz = deque(maxlen=50)
 
+# @app.callback(Output("live-graph-accelerometer", "figure"), [Input("ws", "message")])
+# def message(e):
+#     global xaxiscounter
+#     global X
+#     global YforAx
+#     global YforAy
+#     global YforAz
+
+#     global YforGx
+#     global YforGy
+#     global YforGz
+#     if str(e['data']) == None:
+#         return
+#     if (str(e['data']).startswith("liveData:")):
+#         dict_string = str(e['data']).split("liveData:")[1]
+#         dict_values = json.loads(dict_string)
+#         xaxiscounter += 1
+#         X.append(xaxiscounter)
+#         YforAx.append(dict_values["ax"])
+#         YforAy.append(dict_values["ay"])
+#         YforAz.append(dict_values["az"])
 
 
-@app.callback(Output("live-graph-accelerometer", "figure"), [Input("ws", "message")])
-def message(e):
-    global xaxiscounter
-    global X
-    global YforAx
-    global YforAy
-    global YforAz
+#         dataAx = plotly.graph_objs.Scatter(
+#             x=list(X),
+#             y=list(YforAx),
+#             name='AccelerometerX',
+#         )
+#         dataAy = plotly.graph_objs.Scatter(
+#             x=list(X),
+#             y=list(YforAy),
+#             name='AccelerometerY',
+#         )
+#         dataAz = plotly.graph_objs.Scatter(
+#             x=list(X),
+#             y=list(YforAz),
+#             name='AccelerometerZ',
+#         )
+#         # fix axis range to -1 to 1
+#         return {'data': [dataAx, dataAy, dataAz],
+#                 'layout': go.Layout(xaxis=dict(range=[min(X), max(X)]), uirevision=True, yaxis=dict(range=[-1, 1]))}
 
-    global YforGx
-    global YforGy
-    global YforGz
-    if str(e['data']) == None:
-        return
-    if (str(e['data']).startswith("liveData:")):
-        dict_string = str(e['data']).split("liveData:")[1]
-        dict_values = json.loads(dict_string)
-        xaxiscounter += 1
-        X.append(xaxiscounter)
-        YforAx.append(dict_values["ax"])
-        YforAy.append(dict_values["ay"])
-        YforAz.append(dict_values["az"])
+# write client side callback to update the graph Output("live-graph-accelerometer", "figure"), [Input("ws", "message")]
+# app.clientside_callback(
+#     """
+#     function(message) {
+#         //console.log(message['data']);
+#         if (message['data'].lastIndexOf("liveData", 0) === 0){
+#         //console.log("success");
+#         var data = message['data'].slice(9);
+#         data = JSON.parse(data);
+#         console.log(data);
+#         // initialize x counter if doesn't exist
+        
+#         var YforAx = data.ax;
+#         var YforAy = data.ay;
+#         var YforAz = data.az;
+
+        
+
+#         var dataAx = {
+#             x: X,
+#             y: YforAx,
+#             name: 'AccelerometerX',
+#             type: 'line'
+#         };
+#         var dataAy = {
+#             x: X,
+#             y: YforAy,
+#             name: 'AccelerometerY',
+#             type: 'line'
+#         };
+
+#         var dataAz = {
+#             x: X,
+#             y: YforAz,
+#             name: 'AccelerometerZ',
+#             type: 'line'
+#         };
 
 
-        dataAx = plotly.graph_objs.Scatter(
-            x=list(X),
-            y=list(YforAx),
-            name='AccelerometerX',
-        )
-        dataAy = plotly.graph_objs.Scatter(
-            x=list(X),
-            y=list(YforAy),
-            name='AccelerometerY',
-        )
-        dataAz = plotly.graph_objs.Scatter(
-            x=list(X),
-            y=list(YforAz),
-            name='AccelerometerZ',
-        )
-        # fix axis range to -1 to 1
-        return {'data': [dataAx, dataAy, dataAz],
-                'layout': go.Layout(xaxis=dict(range=[min(X), max(X)]), uirevision=True, yaxis=dict(range=[-1, 1]))}
+#         var data = [dataAx, dataAy, dataAz];
+#         return {
+#             data: data,
+#             layout: {
+#                 uirevision: true,
+#                 xaxis: {
+#                     range: [-1, 1]
+#                 },
+#                 yaxis: {
+#                     range: [-1, 1]
+#                 }
+#             }
+#         };
+#         }
+#     }
 
+#     """,
+#     Output("live-graph-accelerometer", "figure"),
+#     [Input("ws", "message"), Input("live-data-store", "data")],
+# )
+
+app.clientside_callback(
+    """
+    function(message, data_store) {
+        //console.log(message);
+        console.log(data_store);
+        if (message['data'].lastIndexOf("liveData", 0) === 0){
+            var data = message['data'].slice(9);
+            data = JSON.parse(data);
+        }
+        var ax = data.ax;
+        var ay = data.ay;
+        var az = data.az;
+
+        data_store['ax'].push(ax);
+        data_store['ay'].push(ay);
+        data_store['az'].push(az);
+
+        data_store['ax'] = data_store['ax'].slice(-50);
+        data_store['ay'] = data_store['ay'].slice(-50);
+        data_store['az'] = data_store['az'].slice(-50);
+
+        return data_store;
+    }
+    """,
+
+    Input("ws", "message"),
+    Input("live-data-store", "data"),
+    Output("live-data-store", "data"),
+)
+
+# callback for the live graph
+app.clientside_callback(
+    """
+    function(data_store) {
+        console.log(data_store);
+        var ax = data_store.ax;
+        var ay = data_store.ay;
+        var az = data_store.az;
+
+        var dataAx = {
+            y: ax,
+            name: 'AccelerometerX',
+            type: 'line'
+        };
+        var dataAy = {
+            y: ay,
+            name: 'AccelerometerY',
+            type: 'line'
+        };
+
+        var dataAz = {
+            y: az,
+            name: 'AccelerometerZ',
+            type: 'line'
+        };
+
+        var data = [dataAx, dataAy, dataAz];
+
+        return {
+            data: data,
+            layout: {
+                uirevision: true,
+                yaxis: {
+                    range: [-1, 1]
+                }
+            }
+        };
+    }
+    """,
+    Output("live-graph-accelerometer", "figure"),
+    [Input("live-data-store", "data")],
+)
 
 if __name__ == '__main__':
     app.run_server()
