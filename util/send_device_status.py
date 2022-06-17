@@ -11,13 +11,15 @@ async def execute_device_heartbeat(client):
     print("Executing Device Status Update")
     temp_bytes = await client.read_gatt_char(temperature_uuid)  # print(hexlify(temp_bytes))
     [temperature] = struct.unpack('f', temp_bytes)
-    print("Temperature at the moment:" + str(temperature))
+    calibrated_temp = 1.0095 * temperature - 6.8051
+    print("Temperature at the moment:" + str(calibrated_temp))
 
     humidity_bytes = await client.read_gatt_char(humidity_uuid)
     [humidity] = struct.unpack('I', humidity_bytes)
-    print("Humidity at the moment:" + str(humidity))
+    calibrated_humidity = 1.4383 * humidity - 2.5628
+    print("Humidity at the moment:" + str(calibrated_humidity))
     execute_request_thread = Thread(target=send_device_heartbeat_request,
-                                    args=(temperature, humidity))
+                                    args=(calibrated_temp, calibrated_humidity))
     execute_request_thread.start()
 
 

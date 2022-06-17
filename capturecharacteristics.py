@@ -162,7 +162,7 @@ async def main(address):
             if enableDeviceHeartbeat:
                 while True:
                     await asyncio.gather(
-                        asyncio.sleep(60),
+                        asyncio.sleep(120),
                         execute_device_heartbeat(client=client),
                     )
             await asyncio.Future()  # run forever
