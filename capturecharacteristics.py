@@ -32,7 +32,6 @@ sample_count_continous_int: int = 0
 sample_dict_list_continous: List[dict] = []
 
 liveTransmit: bool = False  # Is controlled via the dashboard, enables live data transmission over the websocket
-live_transmit_counter = 0
 modelaction: bool = True  # Enables the live ML-Model prediction
 sendNotifications: bool = False  # Enables the sending of emergency Notifications to the Backend
 enableDeviceHeartbeat: bool = True # Enables a periodic sending of device information, 60s interval
@@ -83,7 +82,6 @@ def bundle_callback(handle, data):
     global moving_window_tick_counter
     global last_x_probabilities
     global averaging_tick_counter
-    global live_transmit_counter
 
     if modelaction:
         collected_data.append(sample_dict)
@@ -140,12 +138,6 @@ def bundle_callback(handle, data):
 
     if liveTransmit:
         asyncio.create_task(broadcastMessage("liveData:" + json.dumps(sample_dict)))
-
-        if live_transmit_counter == 4:
-            #asyncio.create_task(broadcastMessage("liveData:" + json.dumps(sample_dict)))
-            live_transmit_counter = 0
-        else:
-            live_transmit_counter += 1
 
 
 def disconnected_callback(client):
