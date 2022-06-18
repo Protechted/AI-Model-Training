@@ -104,7 +104,8 @@ def bundle_callback(handle, data):
                             execute_request_thread = Thread(target=execute_fall_detected_request,
                                                             args=(timestamp, averageprob))
                             execute_request_thread.start()
-
+                    if liveTransmit:
+                        asyncio.create_task(broadcastMessage("liveProbability:" + json.dumps({"probability": averageprob})))
                     averaging_tick_counter = 0
 
     if startcapture:
@@ -138,8 +139,10 @@ def bundle_callback(handle, data):
             print("Sent Continous Sample of 200 Ticks")
 
     if liveTransmit:
+        asyncio.create_task(broadcastMessage("liveData:" + json.dumps(sample_dict)))
+
         if live_transmit_counter == 4:
-            asyncio.create_task(broadcastMessage("liveData:" + json.dumps(sample_dict)))
+            #asyncio.create_task(broadcastMessage("liveData:" + json.dumps(sample_dict)))
             live_transmit_counter = 0
         else:
             live_transmit_counter += 1
@@ -211,6 +214,6 @@ async def handler(websocket):
 
 if __name__ == "__main__":
     address = "02D307CC-39AB-9D1B-A279-6B8245193D28"
-    #address = "42D1EB68-5EDF-85F9-D05E-82E0AD1CBD94"
+    address = "42D1EB68-5EDF-85F9-D05E-82E0AD1CBD94"
     print('address:', address)
     asyncio.run(main(address))

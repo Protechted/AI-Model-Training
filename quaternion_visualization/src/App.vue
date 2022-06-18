@@ -40,14 +40,17 @@ function onReady(hand) {
 }
 
 ws.onmessage = function incoming(data) {
-  let msg = data.data.slice(9);
-  // try to parse JSON else log the message
-  let json = null;
-  // if message is not empty
-  if (msg.length > 0) {
-    json = JSON.parse(msg);}
-  quaternion = [json.qx, json.qy, json.qz, json.qw];
-  };
+  if (data.data.lastIndexOf("liveData", 0) === 0) {
+    let msg = data.data.slice(9);
+    // try to parse JSON else log the message
+    let json = null;
+    // if message is not empty
+    if (msg.length > 0) {
+      json = JSON.parse(msg);
+    }
+    quaternion = [json.qx, json.qy, json.qz, json.qw];
+  }
+};
 
 onMounted(() => {
   const renderer = rendererC.value
