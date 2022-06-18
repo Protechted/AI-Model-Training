@@ -40,7 +40,7 @@ mltraining = html.Div(
      dbc.Button('Start training', id='starttraining', n_clicks=0, style={"margin-left": "5px"}), dbc.Button('Upload training', id='savetraining', n_clicks=0, style={"margin-left": "5px"}), dbc.Button('Start timer', id='starttimer', n_clicks=0, style={"margin-left": "5px"}), html.Div(style={"margin-top": "5px"}), html.Div(id='stateoutput'), websocket]) # DeferScript(src='assets/custom-js.js')
 mainpage = html.Div([html.P("Willkommen"), websocket])
 liveData = html.Div(
-    [html.P("""Live Data from the sensor. Commands: "live" to start the live Transmitting, "stopLive" to stop it. """),
+    [dbc.Row([dbc.Col(html.P("""Live Data from the sensor. Commands: "live" to start the live Transmitting, "stopLive" to stop it. """), width={"size": 6}),dbc.Col(html.P(html.B(" Average Fall Probabilitiy: 0,0", id="averagefallprobability")), width={"size": 3,"offset": 3})]),
      html.Div(id="hidden_div_for_redirect_callback"),
      dbc.Button('Start live transmit', id='startLiveTransmit', n_clicks=0, style={"margin-right": "4px"}),dbc.Button('Stop live transmit', id='stopLiveTransmit', n_clicks=0),html.Div(style={"margin-top": "5px"}), websocket, html.Br(),
     html.H2("Quaternion Visualization"),
@@ -101,6 +101,23 @@ def df_to_plotly(df):
             'x': df.columns.tolist(),
             'y': df.columns.tolist()}
 
+app.clientside_callback(
+    """
+    function(message) {
+        //console.log(message);
+        if (message['data'].lastIndexOf("liveProbability", 0) === 0){
+            var data = message['data'].slice(15);
+            data = JSON.parse(data);
+        }
+        var probablity = data.probability;
+
+        return probablity;
+    }
+    """,
+
+    Input("ws", "message"),
+    Output("averagefallprobability", "children"),
+)
 
 @app.callback(Output("message", "children"), [Input("ws", "message")])
 def message(e):
