@@ -40,7 +40,7 @@ mltraining = html.Div(
      dbc.Button('Start training', id='starttraining', n_clicks=0, style={"margin-left": "5px"}), dbc.Button('Upload training', id='savetraining', n_clicks=0, style={"margin-left": "5px"}), dbc.Button('Start timer', id='starttimer', n_clicks=0, style={"margin-left": "5px"}), html.Div(style={"margin-top": "5px"}), html.Div(id='stateoutput'), websocket]) # DeferScript(src='assets/custom-js.js')
 mainpage = html.Div([html.P("Willkommen"), websocket])
 liveData = html.Div(
-    [dbc.Row([dbc.Col(html.P("""Live Data from the sensor. Commands: "live" to start the live Transmitting, "stopLive" to stop it. """), width={"size": 6}),dbc.Col(html.P(html.B(" Average Fall Probabilitiy: 0,0", id="averagefallprobability")), width={"size": 3,"offset": 3})]),
+    [dbc.Row([dbc.Col(html.P("""Live Data from the sensor. Commands: "live" to start the live Transmitting, "stopLive" to stop it. """), width={"size": 6}),dbc.Col(html.P(html.B(" Average Fall Probabilitiy: 0,0", id="averagefallprobability"),style={'fontSize': 40, 'text-align': 'center'}), width={"size": 5,"offset": 1})]),
      html.Div(id="hidden_div_for_redirect_callback"),
      dbc.Button('Start live transmit', id='startLiveTransmit', n_clicks=0, style={"margin-right": "4px"}),dbc.Button('Stop live transmit', id='stopLiveTransmit', n_clicks=0),html.Div(style={"margin-top": "5px"}), websocket, html.Br(),
     html.H2("Quaternion Visualization"),
@@ -103,19 +103,34 @@ def df_to_plotly(df):
 
 app.clientside_callback(
     """
-    function(message) {
-        //console.log(message);
-        if (message['data'].lastIndexOf("liveProbability", 0) === 0){
-            var data = message['data'].slice(15);
-            data = JSON.parse(data);
-        }
-        var probablity = data.probability;
+    function(message,childrenatm) {
+        if (message['data'].lastIndexOf("liveProbability:", 0) === 0){
+           console.log("Reached:" + message['data']);
 
-        return probablity;
+            var data = message['data'].slice(16);
+            data = JSON.parse(data);
+       
+        var probability = data['probability'];
+        
+        var textProbab = document.getElementById("averagefallprobability");
+        if (probability < 0.5){
+        textProbab.style.color = "#306b00";
+        }
+        if (probability > 0.5){
+        textProbab.style.color = "#f80"; 
+        }
+        if (probability > 0.9){
+        textProbab.style.color = "#f00"; 
+        }
+
+        return "Average Fall Probabilitiy: " + probability;
+         }
+         return childrenatm;
     }
     """,
 
     Input("ws", "message"),
+    State("averagefallprobability", "children"),
     Output("averagefallprobability", "children"),
 )
 
@@ -326,7 +341,7 @@ app.clientside_callback(
     """
     function(message, data_store) {
         //console.log(message);
-        console.log(data_store);
+        //console.log(data_store);
         if (message['data'].lastIndexOf("liveData", 0) === 0){
             var data = message['data'].slice(9);
             data = JSON.parse(data);
@@ -356,7 +371,7 @@ app.clientside_callback(
 app.clientside_callback(
     """
     function(data_store) {
-        console.log(data_store);
+        //console.log(data_store);
         var ax = data_store.ax;
         var ay = data_store.ay;
         var az = data_store.az;
