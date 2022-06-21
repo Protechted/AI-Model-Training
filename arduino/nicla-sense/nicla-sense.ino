@@ -24,6 +24,10 @@
   #include "Arduino_BHY2.h"
   #include <ArduinoBLE.h>
 
+
+  #define BQ25120A_ADDRESS 0x6A
+  #define BQ25120A_BATT_MON 0x0A
+
   #define BLE_SENSE_UUID(val) ("19b10000" val "-537e-4f6c-d104768a1214")
   #define NUM_AXES 3
   double baseline_a[NUM_AXES];
