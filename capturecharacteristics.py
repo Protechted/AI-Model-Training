@@ -4,8 +4,9 @@ from collections import deque
 from tabnanny import verbose
 from threading import Thread
 from typing import Deque, List
+
+from util.InferenceResultUtils import InferenceResultUtils
 from util.send_fall_detected_request import execute_fall_detected_request
-from util.list_util import average_of_list
 from util.send_device_status import execute_device_heartbeat
 from callbacks import *
 from tensorflow_addons.metrics import F1Score
@@ -39,8 +40,8 @@ enableDeviceHeartbeat: bool = True # Enables a periodic sending of device inform
 collected_data: Deque[dict] = deque(maxlen=150)
 moving_window_tick_counter: int = 0
 
-last_x_probabilities: Deque[float] = deque(maxlen=100)
 averaging_tick_counter: int = 0
+inference_result_utils: InferenceResultUtils
 
 sample_id_uuid = "19b10000-0001-537e-4f6c-d104768a1214" # 4 Byte float32
 accelerometer_uuid = "19b10000-5001-537e-4f6c-d104768a1214" # 3 times 4 byte float32 in an array
@@ -55,7 +56,7 @@ bundled_uuid = "19b10000-1002-537e-4f6c-d104768a1214" # Array of 11x 4 Bytes, AX
 model = tf.keras.models.load_model("./models/gru_classifier_1.h5")
 #model = pickle.load(open("models/naive_bayes.sav", 'rb'))
 
-def model_predict(collected_data: List[dict], mlmodel, last_x_probabilities: Deque[float]):
+def model_predict(collected_data: List[dict], mlmodel, inferenceresults: InferenceResultUtils):
     #print("test model predict")
     collected_data = [list(sample.values()) for sample in collected_data]
     collected_data = np.array(collected_data)
@@ -64,7 +65,7 @@ def model_predict(collected_data: List[dict], mlmodel, last_x_probabilities: Deq
     #collected_data = collected_data.reshape(collected_data.shape[0] * collected_data.shape[1])
     #probability = mlmodel.predict(np.expand_dims(collected_data,0))
     #probability = mlmodel.predict(xgb.DMatrix(np.expand_dims(collected_data,0)))
-    last_x_probabilities.append(probability)
+    inferenceresults.last_x_probabilities.append(probability)
     #print(probability)
 
 def bundle_callback(handle, data):
@@ -80,7 +81,7 @@ def bundle_callback(handle, data):
     global sample_dict_list
     global collected_data
     global moving_window_tick_counter
-    global last_x_probabilities
+    global inference_result_utils
     global averaging_tick_counter
 
     if modelaction:
@@ -88,11 +89,11 @@ def bundle_callback(handle, data):
         moving_window_tick_counter += 1
         if moving_window_tick_counter > 200:
             if moving_window_tick_counter % 2 == 0:
-                thread = Thread(target=model_predict, args=(list(collected_data), model, last_x_probabilities))
+                thread = Thread(target=model_predict, args=(list(collected_data), model, inference_result_utils))
                 thread.start()
                 averaging_tick_counter += 1
                 if averaging_tick_counter == 20:
-                    averageprob: float = average_of_list(last_x_probabilities)
+                    averageprob: float = inference_result_utils.average_of_probabilities()
                     print("AverageProbability: " + str(averageprob))
                     if averageprob >= 0.90:
                         if sendNotifications:
@@ -146,6 +147,8 @@ def disconnected_callback(client):
 
 
 async def main(address):
+    global inference_result_utils
+    inference_result_utils = InferenceResultUtils()
     async with BleakClient(address) as client:
         if (not client.is_connected):
             raise "client not connected"
