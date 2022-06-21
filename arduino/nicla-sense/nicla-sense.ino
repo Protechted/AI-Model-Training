@@ -46,6 +46,9 @@
   BLEUnsignedIntCharacteristic humidityCharacteristic(BLE_SENSE_UUID("3001"), BLERead);
   BLEFloatCharacteristic pressureCharacteristic(BLE_SENSE_UUID("4001"), BLENotify);
 
+  BLEUnsignedIntCharacteristic batteryLevelCharacteristic(BLE_SENSE_UUID("1006"), BLERead);
+
+
 
   BLECharacteristic accelerometerCharacteristic(BLE_SENSE_UUID("5001"), BLERead | BLENotify, 3 * sizeof(float));  // Array of 3x 2 Bytes, XY
   BLECharacteristic gyroscopeCharacteristic(BLE_SENSE_UUID("6001"), BLERead | BLENotify, 3 * sizeof(float));    // Array of 3x 2 Bytes, XYZ
@@ -132,6 +135,7 @@
     service.addCharacteristic(gasCharacteristic);
     service.addCharacteristic(rgbLedCharacteristic);
     service.addCharacteristic(bundledCharacteristic);
+    service.addCharacteristic(batteryLevelCharacteristic);
 
     // Disconnect event handler
     BLE.setEventHandler(BLEDisconnected, blePeripheralDisconnectHandler);
@@ -144,6 +148,7 @@
     co2Characteristic.setEventHandler(BLERead, onCo2CharacteristicRead);
     gasCharacteristic.setEventHandler(BLERead, onGasCharacteristicRead);
     rgbLedCharacteristic.setEventHandler(BLEWritten, onRgbLedCharacteristicWrite);
+    batteryLevelCharacteristic.setEventHandler(BLERead, onBatteryLevelCharacteristicRead);
 
     versionCharacteristic.setValue(VERSION);
 
@@ -307,6 +312,15 @@ void blePeripheralDisconnectHandler(BLEDevice central){
     float temperatureValue = temperature.value();
     temperatureCharacteristic.writeValue(temperatureValue);
   }
+
+  void onBatteryLevelCharacteristicRead(BLEDevice central, BLECharacteristic characteristic){
+    pinMode(p25, OUTPUT);
+    digitalWrite(p25, HIGH);
+    uint8_t battery_value = BQ25120A().readByte(BQ25120A_ADDRESS, BQ25120A_BATT_MON );
+    batteryLevelCharacteristic.writeValue(battery_value);
+    digitalWrite(p25, LOW);
+  }
+
 
 
   void onHumidityCharacteristicRead(BLEDevice central, BLECharacteristic characteristic){

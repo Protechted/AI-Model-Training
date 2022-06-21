@@ -5,6 +5,8 @@ import json
 
 temperature_uuid = "19b10000-2001-537e-4f6c-d104768a1214"  # 4 Byte float32
 humidity_uuid = "19b10000-3001-537e-4f6c-d104768a1214"  # 1 byte Uint8
+battery_uuid = "19b10000-1006-537e-4f6c-d104768a1214"  # 1 byte Uint8
+
 
 
 async def execute_device_heartbeat(client):
