@@ -23,6 +23,7 @@
   #include "Nicla_System.h"
   #include "Arduino_BHY2.h"
   #include <ArduinoBLE.h>
+  BQ25120.h
 
 
   #define BQ25120A_ADDRESS 0x6A

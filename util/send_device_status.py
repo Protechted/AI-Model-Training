@@ -18,17 +18,21 @@ async def execute_device_heartbeat(client):
     humidity_bytes = await client.read_gatt_char(humidity_uuid)
     [humidity] = struct.unpack('I', humidity_bytes)
     print("Humidity at the moment:" + str(humidity))
+
+    battery_bytes = await client.read_gatt_char(battery_uuid)
+    [battery_level] = struct.unpack('I', battery_bytes)
+    print("Battery level at the moment:" + str(battery_level))
     execute_request_thread = Thread(target=send_device_heartbeat_request,
-                                    args=(temperature, humidity))
-    execute_request_thread.start()
+                                    args=(temperature, humidity, battery_level))
+    #execute_request_thread.start()
 
 
-def send_device_heartbeat_request(temperature, humidity):
+def send_device_heartbeat_request(temperature, humidity, battery_level):
     url = "https://europe-west1-erudite-visitor-336410.cloudfunctions.net/updateDeviceState"
 
     payload = json.dumps({
         "deviceId": "did_0001",
-        "batteryLevel": 100,
+        "batteryLevel": battery_level,
         "temperature": temperature,
         "humidity": humidity
     })
