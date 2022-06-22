@@ -34,10 +34,13 @@ sample_dict_list_continous: List[dict] = []
 
 liveTransmit: bool = False  # Is controlled via the dashboard, enables live data transmission over the websocket
 modelaction: bool = True  # Enables the live ML-Model prediction
-sendNotifications: bool = False  # Enables the sending of emergency Notifications to the Backend
+sendNotifications: bool = True  # Enables the sending of emergency Notifications to the Backend
 enableDeviceHeartbeat: bool = True # Enables a periodic sending of device information, 60s interval
 
 liveProb: bool = True
+
+notification_cooldown: datetime
+notification_cooldown_duration_in_seconds: int = 5
 
 collected_data: Deque[dict] = deque(maxlen=150)
 moving_window_tick_counter: int = 0
@@ -104,6 +107,7 @@ def bundle_callback(handle, data):
     global moving_window_tick_counter
     global inference_result_utils
     global averaging_tick_counter
+    global notification_cooldown
 
     if modelaction:
         collected_data.append(sample_dict)
@@ -118,12 +122,19 @@ def bundle_callback(handle, data):
                     print("AverageProbability: " + str(averageprob))
                     if averageprob >= 0.90:
                         if sendNotifications:
-                            timestamp: str = datetime.datetime.now().isoformat()
-                            print("Executing Emergency REST call at " + timestamp + "with a probability of: " + str(
-                                averageprob))
-                            execute_request_thread = Thread(target=execute_fall_detected_request,
-                                                            args=(timestamp, averageprob))
-                            execute_request_thread.start()
+                            date_time_now: datetime = datetime.datetime.now()
+                            if (date_time_now - notification_cooldown).seconds < notification_cooldown_duration_in_seconds:
+                                print("Emergency call with a probability of: " + str(
+                                    averageprob) + " was not issued because of the cooldown configured")
+                            else:
+                                notification_cooldown = date_time_now
+
+                                timestamp: str = datetime.datetime.now().isoformat()
+                                print("Executing Emergency REST call at " + timestamp + "with a probability of: " + str(
+                                    averageprob))
+                                execute_request_thread = Thread(target=execute_fall_detected_request,
+                                                                args=(timestamp, averageprob))
+                                execute_request_thread.start()
                     if liveTransmit or liveProb:
                         asyncio.create_task(broadcastMessage("liveProbability:" + json.dumps({"probability": str(round(averageprob, 4))})))
                     averaging_tick_counter = 0
@@ -169,7 +180,9 @@ def disconnected_callback(client):
 
 async def main(address):
     global inference_result_utils
+    global notification_cooldown
     inference_result_utils = InferenceResultUtils()
+    notification_cooldown = datetime.datetime.now()
     async with BleakClient(address) as client:
         if (not client.is_connected):
             raise "client not connected"
@@ -230,7 +243,7 @@ async def handler(websocket):
 
 if __name__ == "__main__":
     #address = "02D307CC-39AB-9D1B-A279-6B8245193D28"
-    #address = "42D1EB68-5EDF-85F9-D05E-82E0AD1CBD94"
+    #address = "42D1EB68-5EDF-85F9-D05E-82E0AD1CBD94" # Daniel Nicla Sense
     address = "5715B4EA-BFAD-A3E6-04AE-0558170BA098"
     print('address:', address)
     asyncio.run(main(address))
