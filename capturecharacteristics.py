@@ -9,8 +9,8 @@ from util.InferenceResultUtils import InferenceResultUtils
 from util.send_fall_detected_request import execute_fall_detected_request
 from util.send_device_status import execute_device_heartbeat
 from callbacks import *
-from tensorflow_addons.metrics import F1Score
-
+import xgboost as xgb
+from scipy.stats import skew, kurtosis
 
 from bleak import BleakClient
 #import pickle
@@ -37,6 +37,8 @@ modelaction: bool = True  # Enables the live ML-Model prediction
 sendNotifications: bool = False  # Enables the sending of emergency Notifications to the Backend
 enableDeviceHeartbeat: bool = True # Enables a periodic sending of device information, 60s interval
 
+liveProb: bool = True
+
 collected_data: Deque[dict] = deque(maxlen=150)
 moving_window_tick_counter: int = 0
 
@@ -51,20 +53,39 @@ pressure_uuid = "19b10000-4001-537e-4f6c-d104768a1214" # 4 times 4 byte float32 
 bundled_uuid = "19b10000-1002-537e-4f6c-d104768a1214" # Array of 11x 4 Bytes, AX,AY,AZ,GX,GY,GZ,QX,QY,QW,QZ,P
 
 
-#model = xgb.Booster(model_file="./models/xgb_model_1.bin")
+model = xgb.Booster(model_file="./models/xgb-capybara-3.bin")
 # predict the test data
-model = tf.keras.models.load_model("./models/gru_classifier_1.h5")
+#model = tf.keras.models.load_model("./models/bright-music-135.h5")
 #model = pickle.load(open("models/naive_bayes.sav", 'rb'))
+
+
+def get_stats(sample: np.array) -> np.array:
+    sample_stats = {}
+    sample_stats['var'] = sample.var(axis=0)
+    sample_stats['min'] = sample.min(axis=0)
+    sample_stats['max'] = sample.max(axis=0)
+    sample_stats['skew'] = skew(sample, axis=0)
+    sample_stats['kurtosis'] = kurtosis(sample, axis=0)
+    sample_stats['q025'] = np.percentile(sample, q=2.5, axis=0)
+    sample_stats['q25'] = np.percentile(sample, q=25, axis=0)
+    sample_stats['q50'] = np.percentile(sample, q=50, axis=0)
+    sample_stats['q75'] = np.percentile(sample, q=75, axis=0)
+    sample_stats['q95'] = np.percentile(sample, q=95, axis=0)
+
+    return pd.DataFrame(sample_stats).to_numpy()
 
 def model_predict(collected_data: List[dict], mlmodel, inferenceresults: InferenceResultUtils):
     #print("test model predict")
-    collected_data = [list(sample.values()) for sample in collected_data]
+    collected_data = [list( map(sample.get, ["ax", "ay", "az", "gx", "gy", "gz", "qx", "qy", "qz", "qw", "p"]) ) for sample in collected_data]
     collected_data = np.array(collected_data)
-    probability = mlmodel.predict(np.expand_dims(collected_data, axis=0), verbose=0)[0][0]
+    # only take the first three columns, then skip three columns and then four columns
+    #probability = mlmodel.predict(np.expand_dims(collected_data, axis=0), verbose=0)[0][0]
+    #probability = predict(np.expand_dims(collected_data, axis=0))
     # flatten the array (if necessary)
-    #collected_data = collected_data.reshape(collected_data.shape[0] * collected_data.shape[1])
+    collected_data = get_stats(collected_data)
+    collected_data = collected_data.reshape(collected_data.shape[0] * collected_data.shape[1])
     #probability = mlmodel.predict(np.expand_dims(collected_data,0))
-    #probability = mlmodel.predict(xgb.DMatrix(np.expand_dims(collected_data,0)))
+    probability = mlmodel.predict(xgb.DMatrix(np.expand_dims(collected_data,0)))
     inferenceresults.last_x_probabilities.append(probability)
     #print(probability)
 
@@ -92,8 +113,8 @@ def bundle_callback(handle, data):
                 thread = Thread(target=model_predict, args=(list(collected_data), model, inference_result_utils))
                 thread.start()
                 averaging_tick_counter += 1
-                if averaging_tick_counter == 20:
-                    averageprob: float = inference_result_utils.average_of_probabilities()
+                if averaging_tick_counter == 50:
+                    averageprob: float = np.median(inference_result_utils.last_x_probabilities)
                     print("AverageProbability: " + str(averageprob))
                     if averageprob >= 0.90:
                         if sendNotifications:
@@ -103,8 +124,8 @@ def bundle_callback(handle, data):
                             execute_request_thread = Thread(target=execute_fall_detected_request,
                                                             args=(timestamp, averageprob))
                             execute_request_thread.start()
-                    if liveTransmit:
-                        asyncio.create_task(broadcastMessage("liveProbability:" + json.dumps({"probability": averageprob})))
+                    if liveTransmit or liveProb:
+                        asyncio.create_task(broadcastMessage("liveProbability:" + json.dumps({"probability": str(round(averageprob, 4))})))
                     averaging_tick_counter = 0
 
     if startcapture:
@@ -208,7 +229,8 @@ async def handler(websocket):
 
 
 if __name__ == "__main__":
-    address = "02D307CC-39AB-9D1B-A279-6B8245193D28"
-    address = "42D1EB68-5EDF-85F9-D05E-82E0AD1CBD94"
+    #address = "02D307CC-39AB-9D1B-A279-6B8245193D28"
+    #address = "42D1EB68-5EDF-85F9-D05E-82E0AD1CBD94"
+    address = "5715B4EA-BFAD-A3E6-04AE-0558170BA098"
     print('address:', address)
     asyncio.run(main(address))

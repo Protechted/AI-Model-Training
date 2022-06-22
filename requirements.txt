@@ -11,3 +11,4 @@ matplotlib~=3.5.2
 plotly~=5.8.0
 tensorflow
 tensorflow_addons
+scipy
