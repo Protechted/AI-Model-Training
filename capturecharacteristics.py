@@ -11,6 +11,7 @@ from util.send_device_status import execute_device_heartbeat
 from callbacks import *
 import xgboost as xgb
 from scipy.stats import skew, kurtosis
+from tensorflow_addons.metrics import F1Score
 
 from bleak import BleakClient
 #import pickle
@@ -56,9 +57,9 @@ pressure_uuid = "19b10000-4001-537e-4f6c-d104768a1214" # 4 times 4 byte float32 
 bundled_uuid = "19b10000-1002-537e-4f6c-d104768a1214" # Array of 11x 4 Bytes, AX,AY,AZ,GX,GY,GZ,QX,QY,QW,QZ,P
 
 
-model = xgb.Booster(model_file="./models/xgb-capybara-3.bin")
+model = xgb.Booster(model_file="./models/xgb-capybara-4.bin")
 # predict the test data
-#model = tf.keras.models.load_model("./models/bright-music-135.h5")
+#model = tf.keras.models.load_model("./models/peach-fire-193.h5")
 #model = pickle.load(open("models/naive_bayes.sav", 'rb'))
 
 
@@ -87,7 +88,7 @@ def model_predict(collected_data: List[dict], mlmodel, inferenceresults: Inferen
     # flatten the array (if necessary)
     collected_data = get_stats(collected_data)
     collected_data = collected_data.reshape(collected_data.shape[0] * collected_data.shape[1])
-    #probability = mlmodel.predict(np.expand_dims(collected_data,0))
+    #probability = mlmodel.predict(np.expand_dims(collected_data,0), verbose=0)[0][0]
     probability = mlmodel.predict(xgb.DMatrix(np.expand_dims(collected_data,0)))
     inferenceresults.last_x_probabilities.append(probability)
     #print(probability)
