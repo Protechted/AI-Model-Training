@@ -26,7 +26,7 @@ def send_device_heartbeat_request(temperature, humidity):
 
     payload = json.dumps({
         "deviceId": "did_0001",
-        "batteryLevel": 100,
+        "batteryLevel": 0.82,
         "temperature": temperature,
         "humidity": humidity
     })

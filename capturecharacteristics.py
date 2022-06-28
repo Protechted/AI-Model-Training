@@ -129,7 +129,7 @@ def bundle_callback(handle, data):
                             else:
                                 notification_cooldown = date_time_now
 
-                                timestamp: str = datetime.datetime.now().isoformat()
+                                timestamp: str = datetime.datetime.now().astimezone().isoformat()
                                 print("Executing Emergency REST call at " + timestamp + "with a probability of: " + str(
                                     averageprob))
                                 execute_request_thread = Thread(target=execute_fall_detected_request,
