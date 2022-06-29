@@ -1,5 +1,6 @@
 import json
 from collections import deque
+import flask
 
 import numpy as np
 import plotly
@@ -44,7 +45,7 @@ liveData = html.Div(
      html.Div(id="hidden_div_for_redirect_callback"),
      dbc.Button('Start live transmit', id='startLiveTransmit', n_clicks=0, style={"margin-right": "4px"}),dbc.Button('Stop live transmit', id='stopLiveTransmit', n_clicks=0),html.Div(style={"margin-top": "5px"}), websocket, html.Br(),
     html.H2("Quaternion Visualization"),
-    html.Iframe(src="http://localhost:3000/",
+    html.Iframe(src="http://localhost:8050/assets/dist/index.html",
                 style={"height": "300px", "width": "100%"}),
      html.H2("Daten Beschleunigungssensor"),
      dcc.Graph(id='live-graph-accelerometer', animate=False, config={"responsive": True}),
@@ -409,6 +410,11 @@ app.clientside_callback(
     Output("live-graph-accelerometer", "figure"),
     [Input("live-data-store", "data")],
 )
+
+@app.server.route("/assets/dist/<path:path>")
+def index(path):
+    return flask.send_from_directory("assets/dist", path)
+
 
 if __name__ == '__main__':
     app.run_server()
