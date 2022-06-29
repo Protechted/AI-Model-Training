@@ -43,7 +43,7 @@ liveProb: bool = True
 notification_cooldown: datetime
 notification_cooldown_duration_in_seconds: int = 5
 
-collected_data: Deque[dict] = deque(maxlen=150)
+collected_data: Deque[dict] = deque(maxlen=100)
 moving_window_tick_counter: int = 0
 
 averaging_tick_counter: int = 0
@@ -57,7 +57,7 @@ pressure_uuid = "19b10000-4001-537e-4f6c-d104768a1214" # 4 times 4 byte float32 
 bundled_uuid = "19b10000-1002-537e-4f6c-d104768a1214" # Array of 11x 4 Bytes, AX,AY,AZ,GX,GY,GZ,QX,QY,QW,QZ,P
 
 
-model = xgb.Booster(model_file="./models/xgb-capybara-4.bin")
+model = xgb.Booster(model_file="./models/xgb-capybara-100-3.bin")
 # predict the test data
 #model = tf.keras.models.load_model("./models/peach-fire-193.h5")
 #model = pickle.load(open("models/naive_bayes.sav", 'rb'))
@@ -91,7 +91,7 @@ def model_predict(collected_data: List[dict], mlmodel, inferenceresults: Inferen
     #probability = mlmodel.predict(np.expand_dims(collected_data,0), verbose=0)[0][0]
     probability = mlmodel.predict(xgb.DMatrix(np.expand_dims(collected_data,0)))
     inferenceresults.last_x_probabilities.append(probability)
-    #print(probability)
+    print(probability)
 
 def bundle_callback(handle, data):
     # print(handle, data)
@@ -118,10 +118,10 @@ def bundle_callback(handle, data):
                 thread = Thread(target=model_predict, args=(list(collected_data), model, inference_result_utils))
                 thread.start()
                 averaging_tick_counter += 1
-                if averaging_tick_counter == 50:
+                if averaging_tick_counter == 10:
                     averageprob: float = np.median(inference_result_utils.last_x_probabilities)
-                    print("AverageProbability: " + str(averageprob))
-                    if averageprob >= 0.90:
+                    #print("AverageProbability: " + str(averageprob))
+                    if averageprob >= 0.80:
                         if sendNotifications:
                             date_time_now: datetime = datetime.datetime.now()
                             if (date_time_now - notification_cooldown).seconds < notification_cooldown_duration_in_seconds:
