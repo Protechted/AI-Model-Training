@@ -413,7 +413,7 @@ app.clientside_callback(
 
 @app.server.route("/assets/dist/<path:path>")
 def index(path):
-    return flask.send_from_directory("assets/dist", path)
+    return flask.send_from_directory("dist", path)
 
 
 if __name__ == '__main__':
