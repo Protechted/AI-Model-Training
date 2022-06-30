@@ -18,7 +18,7 @@ import dash_bootstrap_components as dbc
 from dash import Output, html, dcc, Input, ctx
 import pandas as pd
 import plotly.tools as tls
-from insert import insert_data
+#from insert import insert_data
 
 
 training_data: pd.DataFrame = None
@@ -64,7 +64,7 @@ def send(n_clicks,valueKlasse,valueSubject):
     global training_data
     if training_data is not None:
         print("Starting Saving Training data!")
-        insert_data(training_data,valueKlasse,valueSubject)
+        #insert_data(training_data,valueKlasse,valueSubject)
         training_data = None
         return "Training saving - Success"
     return "Failure!"
