@@ -11,7 +11,7 @@ from util.send_device_status import execute_device_heartbeat
 from callbacks import *
 import xgboost as xgb
 from scipy.stats import skew, kurtosis
-from tensorflow_addons.metrics import F1Score
+#from tensorflow_addons.metrics import F1Score
 
 from bleak import BleakClient
 #import pickle
@@ -20,7 +20,7 @@ import datetime
 import websockets
 import json
 import pandas as pd
-import tensorflow as tf
+#import tensorflow as tf
 import numpy as np
 
 CLIENTS = set()
@@ -244,7 +244,9 @@ async def handler(websocket):
 
 if __name__ == "__main__":
     #address = "02D307CC-39AB-9D1B-A279-6B8245193D28"
-    address = "42D1EB68-5EDF-85F9-D05E-82E0AD1CBD94" # Daniel Nicla Sense
+    #address = "42D1EB68-5EDF-85F9-D05E-82E0AD1CBD94" # Daniel Nicla Sense
+
+    address ="D516DBE2-4FEA-DD4B-2DDD-FFDBF28A6400"
     #address = "5715B4EA-BFAD-A3E6-04AE-0558170BA098"
     print('address:', address)
     asyncio.run(main(address))
