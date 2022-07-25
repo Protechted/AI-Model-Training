@@ -1,5 +1,13 @@
 # Github Repo with code for training the AI model and acquiring all sensor values from the Nicla Sense ME
 
+## Preview
+### Live data inspection
+![LiveDataTab](readmeimg/liveDataDashboard.png)
+### Model training and data upload
+![LiveDataTab](readmeimg/self-service-dashboard.png)
+
+
+## Installation and Set-up instructions
 To install the necessary python requirements do:
 ```
 pip install -r requirements.txt
