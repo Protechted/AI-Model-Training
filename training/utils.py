@@ -88,7 +88,7 @@ def __reduce_timeframe(X: np.array, y: list, win_size: int = 100, step_size_1: i
     return samples, labels
 
 def load_data(win_size=150, step_size_1=1, step_size_0=10, win_begin=-20, win_end=5):
-    CONNECTION = "postgres://postgres:EbHVP7KzkkazeC4WMtUUHAjPFWaYq9nsKk9nzfvj9XdM5ZLLZhW@193.196.55.228:6744/postgres"
+    CONNECTION = "xxx"
     DATA_HEADERS = ["row", "ax", "ay", "az", "gx", "gy", "gz", "qx", "qy", "qz", "qw", "p", "sample_id"]
     SAMPLE_HEADERS = ["sample_id", "subject", "label"]
 
