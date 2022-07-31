@@ -3,7 +3,7 @@ import pandas as pd
 
 def insert_data(data_df: pd.DataFrame, label: str, subject: str = "test"):
 
-    CONNECTION = "postgres://postgres:EbHVP7KzkkazeC4WMtUUHAjPFWaYq9nsKk9nzfvj9XdM5ZLLZhW@193.196.55.228:6744/postgres"
+    CONNECTION = "xxx"
 
     #df = pd.read_csv("data/test.csv")
     df = data_df
